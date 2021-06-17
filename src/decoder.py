@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 
 class AE(torch.nn.Module):
@@ -7,15 +8,17 @@ class AE(torch.nn.Module):
         self.decoder_hidden_layer = torch.nn.Linear(
             in_features=in_dims, out_features=out_dims
         )
-        self.decoder_output_layer = torch.nn.Linear(
-            in_features=out_dims, out_features=out_dims
-        )
+         #had to remove this layer, otherwise to expensive
+        # self.decoder_output_layer = torch.nn.Linear(
+        #     in_features=out_dims, out_features=out_dims
+        # )
 
     def forward(self, latent):
         layer = self.decoder_hidden_layer(latent)
         layer = torch.relu(layer)
-        layer = self.decoder_output_layer(layer)
-        return torch.relu(layer)
+        # layer = self.decoder_output_layer(layer)
+        # layer = torch.relu(layer)
+        return layer
 
 
 class CNNAE():
@@ -32,32 +35,33 @@ class Decoder():
 
 
     def train(self, buffer, epochs=1000, batch_size=56):
+        print(f"Starting decoder training for {epochs} epochs")
         # input as numpy arrays, change to tensors
         # orig_images = torch.from_numpy(orig_images).float()
         # lat_images = torch.from_numpy(lat_images).float()
         # train
-        for epoch in range(epochs):
-            orig_images, lat_images = buffer.sample(batch_size)
+        for epoch in tqdm(range(epochs)):
+            orig_images, lat_images = buffer.sample(batch_size) # TODO: replace by minibatch sampling
             total_loss = 0
-            for (orig, latent) in zip(orig_images, lat_images):
+            # for (orig, latent) in zip(orig_images, lat_images):
 
-                # reset the gradients to zero
-                self.optimizer.zero_grad()
+            # reset the gradients to zero
+            self.optimizer.zero_grad()
 
-                # compute reconstructions
-                outputs = self.model(latent)
+            # compute reconstructions
+            outputs = self.model(lat_images)
 
-                # compute reconstruction loss
-                loss = self.criterion(outputs, orig)
+            # compute reconstruction loss
+            loss = self.criterion(outputs, orig_images)
 
-                # compute gradients
-                loss.backward()
+            # compute gradients
+            loss.backward()
 
-                # perform parameter update
-                self.optimizer.step()
+            # perform parameter update
+            self.optimizer.step()
 
-                # add this images's loss to epoch loss
-                total_loss += loss.item()
+            # add this images's loss to epoch loss
+            total_loss += loss.item()
 
             # compute the epoch training loss
             total_loss = total_loss / len(orig_images)
