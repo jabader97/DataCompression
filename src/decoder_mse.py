@@ -17,6 +17,8 @@ class AE(torch.nn.Module):
         layer = self.decoder_output_layer(layer)
         return torch.relu(layer)
 
+        
+
 
 # method to decode according to MSE
 # takes inputs:
