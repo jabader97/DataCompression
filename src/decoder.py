@@ -18,20 +18,26 @@ class AE(torch.nn.Module):
         return torch.relu(layer)
 
 
+class CNNAE():
+     # TODO: add class
+    pass
+
+
 
 class Decoder():
-    def __init__(self, in_dims, out_dims):
+    def __init__(self, in_dims, out_dims): # TODO: add decoder class
         self.model = AE(in_dims=in_dims, out_dims=out_dims)
         self.criterion = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters())
 
 
-    def train(self, orig_images, lat_images, epochs=1000):
+    def train(self, buffer, epochs=1000, batch_size=56):
         # input as numpy arrays, change to tensors
-        orig_images = torch.from_numpy(orig_images).float()
-        lat_images = torch.from_numpy(lat_images).float()
+        # orig_images = torch.from_numpy(orig_images).float()
+        # lat_images = torch.from_numpy(lat_images).float()
         # train
         for epoch in range(epochs):
+            orig_images, lat_images = buffer.sample(batch_size)
             total_loss = 0
             for (orig, latent) in zip(orig_images, lat_images):
 
@@ -60,21 +66,27 @@ class Decoder():
             print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, total_loss))
 
 
+
+
 class BaseDecoder:
     """Basic idea for the training of the decoder
     """
-    def __init__(self, encoder, decoder):
-        self.encoder = encoder
+    def __init__(self, decoder):
         self.decoder = decoder
         self.criterion = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.decoder.parameters())
 
     def train(self, images, latents):
         # decoder pass
-        reconstructed = self.decoder(latents)
-        with torch.no_grad():
-            latent_predict = self.encoder(reconstructed)
-        loss = self.criterion(latents, latent_predict)
+        reconstructed = self.decoder(latents) # decode latent
+
+        # method 1
+        # with torch.no_grad():
+        #     latent_predict = self.encoder(reconstructed) # encode again (new latent)
+        # loss = self.criterion(latents, latent_predict)
+
+        # method 2
+        loss = self.criterion(images, reconstructed)
 
 
         # reset the gradients to zero
