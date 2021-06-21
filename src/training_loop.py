@@ -99,7 +99,8 @@ class Trainer(BaseModel):
         """
         observation = self._env.reset()
         for i in range(steps):
-            action = self._rl_agent.predict(observation)#self._env.action_space.sample() # your agent here (this takes random actions)
+            # action = self._rl_agent.predict(observation) # your agent here
+            action = self.random_env_action()# (this takes random actions)
             observation, reward, done, info = self._env.step(action)
             observation = torch.from_numpy(observation).float()
             latent = self._encoder_network(observation).detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
@@ -109,17 +110,44 @@ class Trainer(BaseModel):
 
         self._env.close()
 
-    def rgb2gray(rgb):
-        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
-        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 
-        return gray
-            
+    def random_env_action(self):
+        """Chooses a random env action, mainly just wraps the action to the format expected by the agent
+
+        Returns:
+            tuple(numpyp.array, None): The action
+        """
+        return (np.array([self._env.action_space.sample()], dtype=np.int64), None)
+
+    def save(self, filepath):
+        """Saves the rl_agent and the Decoder into the given directory
+
+        Args:
+            filepath (string): path to the directory
+        """
+        if not os.path.exists(filepath):
+            os.mkdir(filepath)
+
+        self._rl_agent.save(filepath + "/rl_agent") # save rl agent
+        self._Decoder.save(filepath)
+        self._buffer.save(filepath)
+
+    def load(self, filepath):
+        """Loads the rl_agent and the Decoder from the given directory.
+
+        Args:
+            filepath (string): path to the directory
+        """
+        self._rl_agent.load(filepath + "/rl_agent")
+        self._Decoder.load(filepath)
+        self._buffer.load(filepath)
 
 
 
 t = Trainer() # here you can put args in trainer
 t.train()
+t.save("P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression/test")
+t.load("P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression/test")
 # t.fill_buffer_randomly()
 
 

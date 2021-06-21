@@ -69,6 +69,16 @@ class Decoder():
             # display the epoch training loss
             print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, total_loss))
 
+    def save(self, filepath):
+        if filepath[-1] != "/":
+            filepath += "/"
+        torch.save(self.model.state_dict(), filepath + "decoder")
+
+    def load(self, filepath):
+        if filepath[-1] != "/":
+            filepath += "/"
+        self.model.load_state_dict(torch.load(filepath + "decoder"))
+
 
 
 
