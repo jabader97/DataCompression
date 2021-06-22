@@ -1,0 +1,15 @@
+{
+    "latent_dim": 128,
+    "image_dim": [
+        3,
+        210,
+        160
+    ],
+    "save_path": "C:/Users/Philipp von Bachmann/Documents/Dokumente_Philipp/Uni/DataCompression/exp/first_example/run_1000",
+    "environment_name": "BreakoutNoFrameskip-v4",
+    "rl_agent_train_steps": 10000,
+    "decoder_train_steps": 1000,
+    "decoder_batch_size": 64,
+    "decoder_class": null,
+    "buffer_size": 1000
+}
