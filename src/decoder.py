@@ -1,5 +1,6 @@
 import torch
 from tqdm import tqdm
+import time
 
 
 class AE(torch.nn.Module):
@@ -35,11 +36,14 @@ class Decoder():
 
 
     def train(self, buffer, epochs=1000, batch_size=56):
-        print(f"Starting decoder training for {epochs} epochs")
+        print(f"Training decoder for {epochs} epochs")
+        time.sleep(1) # to avoid printstream clashing with progressbar
         # input as numpy arrays, change to tensors
         # orig_images = torch.from_numpy(orig_images).float()
         # lat_images = torch.from_numpy(lat_images).float()
+        
         # train
+        epoch_losses = []
         for epoch in tqdm(range(epochs)):
             orig_images, lat_images = buffer.sample(batch_size) # TODO: replace by minibatch sampling
             total_loss = 0
@@ -60,14 +64,17 @@ class Decoder():
             # perform parameter update
             self.optimizer.step()
 
-            # add this images's loss to epoch loss
-            total_loss += loss.item()
+            # add this images's loss to epoch losses (loss per image normalized)
+            epoch_losses.append(loss.item()/batch_size)
 
-            # compute the epoch training loss
-            total_loss = total_loss / len(orig_images)
 
             # display the epoch training loss
-            print("epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, total_loss))
+            if epoch % 100 == 0:
+                print("\n epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, epoch_losses[-1]))
+                time.sleep(1) # to avoid printstream clashing with progressbar
+            
+
+        return epoch_losses
 
     def save(self, filepath):
         if filepath[-1] != "/":

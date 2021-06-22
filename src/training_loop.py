@@ -1,18 +1,22 @@
 # first implementation of a training loop
-import os
+import os, time
 import sys
+import json
 from typing import List
 from pydantic import BaseModel
 import torch
 import numpy as np
 sys.path.append(os.getcwd())
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path)
 
 from msc.encoder import Encoder
 from stable_baselines3 import PPO
 from decoder import Decoder
 import gym
+from tqdm import tqdm
 from buffer import Decoder_Buffer
-
+from matplotlib import pyplot as plt
 
 class Trainer(BaseModel):
     """A Trainer class for the combined model
@@ -20,15 +24,17 @@ class Trainer(BaseModel):
     # general parameters
     latent_dim: int = 128
     image_dim: List[int] = None
+    save_path: str = "P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression" # my save path ;) 
 
     # rl agent parameters
     environment_name: str =  "BreakoutNoFrameskip-v4"
-    encoder_class = Encoder
-    rl_agent_type = PPO
+    encoder_class: object = Encoder
+    rl_agent_type: object = PPO
     rl_agent_train_steps: int = 10
 
     # Decoder Parameters
     decoder_train_steps: int = 10 # TODO: look over class variables
+    decoder_batch_size: int = 100
     decoder_class: object = None # TODO: add class
 
     # buffer
@@ -78,29 +84,46 @@ class Trainer(BaseModel):
 
 #---------------------- Train methods -----------------------------------------        
 
-    def train_rl_agent(self):
-        self._rl_agent.learn(self.rl_agent_train_steps)
+    def train_rl_agent(self, epochs, save_every=None):
+        if save_every:
+            for i in range(0, epochs, save_every):
+                self._rl_agent.learn(save_every)
+                self._rl_agent.save(self.save_path + "rl_agent")
+                print("\n Saved RL agent")
+        else:
+            self._rl_agent.learn(epochs)
         
 
-    def train_Decoder(self, epochs, batch_size):
+    def train_Decoder(self, epochs, batch_size, save_every=None):
         # TODO add images
-        self._Decoder.train(self._buffer, epochs, batch_size)
+        if save_every:
+            epoch_losses=[]
+            for i in range(0, epochs, save_every):
+                epoch_losses += self._Decoder.train(self._buffer, save_every, batch_size)
+                self._Decoder.save(self.save_path)
+        else:
+            epoch_losses = self._Decoder.train(self._buffer, epochs, batch_size)
+        return epoch_losses
 
     def train(self):
-        # self.train_rl_agent() # train latent network (encoder)
-        self.fill_buffer_randomly(100) # fill buffer
-        self.train_Decoder(50, 10) # train decoder
+        self.train_rl_agent(self.rl_agent_train_steps) # train latent network (encoder)
+        self.fill_buffer(self.buffer_size) # fill buffer
+        self.train_Decoder(self.decoder_train_steps, batch_size=self.decoder_batch_size) # train decoder
 
-    def fill_buffer_randomly(self, steps=100):
+    def fill_buffer(self, samples=100, randomly=True, use_tqdm=True):
         """Fills the buffer randomly
 
         Args:
             steps (int): Number of steps to take
+            use_tqdm (bool): Add progress bar if True.
         """
+        print(f"Filling buffer with {samples} samples")
+        time.sleep(1) # to avoid printstream clashing with progressbar
         observation = self._env.reset()
-        for i in range(steps):
-            # action = self._rl_agent.predict(observation) # your agent here
-            action = self.random_env_action()# (this takes random actions)
+        r = tqdm(range(samples)) if use_tqdm else range(samples)
+        get_action = self.random_env_action if randomly else self._rl_agent.predict
+        for i in r:
+            action = get_action()
             observation, reward, done, info = self._env.step(action)
             observation = torch.from_numpy(observation).float()
             latent = self._encoder_network(observation).detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
@@ -111,63 +134,67 @@ class Trainer(BaseModel):
         self._env.close()
 
 
-    def random_env_action(self):
+    def random_env_action(self, dummy=None):
         """Chooses a random env action, mainly just wraps the action to the format expected by the agent
-
+            Has dummy value to use same signature as Rl agent sample
         Returns:
             tuple(numpyp.array, None): The action
         """
         return (np.array([self._env.action_space.sample()], dtype=np.int64), None)
 
-    def save(self, filepath):
+    def save(self, filepath=None, buffer=False):
         """Saves the rl_agent and the Decoder into the given directory
 
         Args:
             filepath (string): path to the directory
+            buffer (bool): If the buffer should also be saved. Defaults to False.
         """
+        if not filepath:
+            filepath = self.save_path
         if not os.path.exists(filepath):
             os.mkdir(filepath)
 
-        self._rl_agent.save(filepath + "/rl_agent") # save rl agent
-        self._Decoder.save(filepath)
-        self._buffer.save(filepath)
+        if filepath[-1] != "/":
+            filepath += "/"
 
-    def load(self, filepath):
+        self._rl_agent.save(filepath + "rl_agent") # save rl agent
+        self._Decoder.save(filepath)
+        if buffer:
+            self._buffer.save(filepath)
+        with open(filepath + "config.txt", "w") as f: # this just writes all variables whose types are known to pydantic
+            json.dump(self.dict(), f, indent=4)
+
+    def load(self, filepath=None, buffer=False):
         """Loads the rl_agent and the Decoder from the given directory.
 
         Args:
             filepath (string): path to the directory
         """
+        if not filepath:
+            filepath = self.save_path
+        if filepath[-1] != "/":
+            filepath += "/"
         self._rl_agent.load(filepath + "/rl_agent")
         self._Decoder.load(filepath)
-        self._buffer.load(filepath)
+        if buffer:
+            self._buffer.load(filepath)
 
 
 
-t = Trainer() # here you can put args in trainer
-t.train()
-t.save("P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression/test")
-t.load("P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression/test")
-# t.fill_buffer_randomly()
 
 
-
-# next steps:
-# - improve decoder
-# - try first training loop
-# - give encoder to decoder
 
 
 # tasks:
 
 # till tuesday
-# - get running example (flattened image) (Philipp)
+# - get running example (flattened image) (Philipp) done
 # - write his report
 # - draw architecture
-# - text him with david and ask for gpu for training
+# - text him with david and ask for gpu for training done
 
 # rest until meeting
-# - method to save/load RL agent (and Decoder)
+# - method to save/load RL agent (and Decoder) done
 # - look in convolution AE
 # - look back to training of AE?
 # - implement second trainig method
