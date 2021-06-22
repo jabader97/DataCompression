@@ -58,4 +58,26 @@ We implemented the most basic version of Architecture 1 for Breakout. This inclu
     \caption{Third architecture (avoids state space assumption)}
     \label{fig:arch3}
 \end{figure}
+
+\section{First results}
+  We run a small test with the first architecture \ref{fig:arch1}. The
+  environment was Breakout from gym, which uses states/image of size 3*210*160.
+  We converted them to greyscale which results in a flattened size of 33600. The
+  latents had a size of 128, and the Deocder uses one fullyconnected layer from
+  latents to image dim.\\
+  
+  We then first trained the RL agent for 10000 environment steps, the filled the
+  buffer with 1000 random states and trained the decoder for 1000 steps. To
+  compare, we used the same training for the decoder, but with an untrained RL
+  agent. The results \ref{fig:train_results} show that not only is the decoder able to learn, but it
+  also performs better if a pretrained agent is used. This shows that in a very
+  simple model, the RL agent provides at least some valuable imformation to the
+  decoder.
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{training_results.jpg}
+    \caption{Training results}
+    \label{fig:train_results}
+\end{figure}
 \end{document}
