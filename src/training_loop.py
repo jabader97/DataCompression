@@ -10,13 +10,13 @@ sys.path.append(os.getcwd())
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
 
-from msc.encoder import Encoder
+from DataCompression.msc.encoder import Encoder
 from stable_baselines3 import PPO
-from decoder import Decoder
 import gym
 from tqdm import tqdm
 from buffer import Decoder_Buffer
 from matplotlib import pyplot as plt
+import DataCompression.src.decoder_MSE as Decoder
 
 class Trainer(BaseModel):
     """A Trainer class for the combined model
@@ -76,7 +76,10 @@ class Trainer(BaseModel):
 
     def init_Decoder(self):
         dimension = self._buffer.get_image_dims()
-        self._Decoder = Decoder(self.latent_dim, dimension[0]) # TODO: check how to use feature dims
+        model = Decoder.AE(self.latent_dim, dimension[0])
+        loss = torch.nn.MSELoss()
+        optimizer = torch.optim.Adam(model.parameters())
+        self._Decoder = Decoder(model, loss, optimizer)  # TODO: check how to use feature dims
 
     def init_buffer(self):
         self._buffer = self.buffer_class(list(self.image_dim), self.latent_dim, self.buffer_size, to_gray=True, flatten=True)
