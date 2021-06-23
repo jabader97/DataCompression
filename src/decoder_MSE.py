@@ -9,31 +9,38 @@ class AE(torch.nn.Module):
         self.decoder_hidden_layer = torch.nn.Linear(
             in_features=in_dims, out_features=out_dims
         )
-         #had to remove this layer, otherwise to expensive
-        # self.decoder_output_layer = torch.nn.Linear(
-        #     in_features=out_dims, out_features=out_dims
-        # )
 
     def forward(self, latent):
         layer = self.decoder_hidden_layer(latent)
         layer = torch.relu(layer)
-        # layer = self.decoder_output_layer(layer)
-        # layer = torch.relu(layer)
         return layer
 
 
-class CNNAE():
-     # TODO: add class
-    pass
+class CNN_AE(torch.nn.Module):
+    # in_dims and out_dims in shape HxWxC (can pass image.shape)
+    def __init__(self, in_dims, out_dims):
+        super().__init__()
+        ks = (out_dims[1] - in_dims[1] + 1, out_dims[2] - in_dims[2] + 1)
+        s = (1, 1)
+        self.decoder_hidden_layer = torch.nn.ConvTranspose2d(
+            in_channels=in_dims[0], out_channels=out_dims[0], kernel_size=ks, stride=s
+        )
+
+    def forward(self, latent):
+        layer = self.decoder_hidden_layer(latent)
+        layer = torch.relu(layer)
+        return layer
 
 
-
-class Decoder():
-    def __init__(self, in_dims, out_dims): # TODO: add decoder class
-        self.model = AE(in_dims=in_dims, out_dims=out_dims)
-        self.criterion = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters())
-
+class Decoder:
+    # example:
+    # model = AE(in_dims=in_dims, out_dims=out_dims)
+    # loss = torch.nn.MSELoss()
+    # optimizer = torch.optim.Adam(self.model.parameters())
+    def __init__(self, model, loss, optimizer):
+        self.model = model
+        self.criterion = loss
+        self.optimizer = optimizer
 
     def train(self, buffer, epochs=1000, batch_size=56):
         print(f"Training decoder for {epochs} epochs")
@@ -67,12 +74,10 @@ class Decoder():
             # add this images's loss to epoch losses (loss per image normalized)
             epoch_losses.append(loss.item()/batch_size)
 
-
             # display the epoch training loss
             if epoch % 100 == 0:
                 print("\n epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, epoch_losses[-1]))
                 time.sleep(1) # to avoid printstream clashing with progressbar
-            
 
         return epoch_losses
 
@@ -85,8 +90,6 @@ class Decoder():
         if filepath[-1] != "/":
             filepath += "/"
         self.model.load_state_dict(torch.load(filepath + "decoder"))
-
-
 
 
 class BaseDecoder:
@@ -108,7 +111,6 @@ class BaseDecoder:
 
         # method 2
         loss = self.criterion(images, reconstructed)
-
 
         # reset the gradients to zero
         self.optimizer.zero_grad()
