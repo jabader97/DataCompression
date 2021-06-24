@@ -33,26 +33,24 @@ epochs = 2
 epoch_losses = []
 for epoch in range(epochs):
     total_loss = 0
-    for image, lat in zip(x_train, latent):
-        # reset the gradients to zero
-        optimizer.zero_grad()
+    # reset the gradients to zero
+    optimizer.zero_grad()
 
-        # compute reconstructions
-        lat = torch.unsqueeze(lat, 0)
-        outputs = model(lat)
-        outputs = torch.squeeze(outputs, 0)
+    # compute reconstructions
+    outputs = model(latent)
+    outputs = torch.squeeze(outputs, 0)
 
-        # compute reconstruction loss
-        loss = criterion(outputs, image)
+    # compute reconstruction loss
+    loss = criterion(outputs, x_train)
 
-        # compute gradients
-        loss.backward()
+    # compute gradients
+    loss.backward()
 
-        # perform parameter update
-        optimizer.step()
+    # perform parameter update
+    optimizer.step()
 
-        # add this images's loss to epoch losses (loss per image normalized)
-        epoch_losses.append(loss.item() / len(y_train))
+    # add this images's loss to epoch losses (loss per image normalized)
+    epoch_losses.append(loss.item() / len(y_train))
 
         # display the epoch training loss
     if epoch % 100 == 0:
