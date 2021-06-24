@@ -14,7 +14,7 @@ from DataCompression.msc.encoder import Encoder
 from stable_baselines3 import PPO
 import gym
 from tqdm import tqdm
-from buffer import Decoder_Buffer
+from DataCompression.src.buffer import Decoder_Buffer
 from matplotlib import pyplot as plt
 import DataCompression.src.decoder_MSE as Decoder
 
@@ -36,6 +36,10 @@ class Trainer(BaseModel):
     decoder_train_steps: int = 10 # TODO: look over class variables
     decoder_batch_size: int = 100
     decoder_class: object = None # TODO: add class
+    decoder_model: object = None
+    decoder_loss: object = torch.nn.MSELoss()
+    decoder_lr: float = 1e-4
+    decoder_optimizer: object = None
 
     # buffer
     buffer_class = Decoder_Buffer
@@ -75,11 +79,12 @@ class Trainer(BaseModel):
         self._encoder_network = self._rl_agent.policy.features_extractor # for easy access to encoder
 
     def init_Decoder(self):
-        dimension = self._buffer.get_image_dims()
-        model = Decoder.AE(self.latent_dim, dimension[0])
-        loss = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(model.parameters())
-        self._Decoder = Decoder(model, loss, optimizer)  # TODO: check how to use feature dims
+        if self.decoder_model is None:
+            dimension = self._buffer.get_image_dims()
+            self.decoder_model = Decoder.AE(self.latent_dim, dimension[0])
+        if self.decoder_optimizer is None:
+            self.decoder_optimizer = torch.optim.Adam(self.decoder_model.parameters(), lr=self.decoder_lr)
+        self._Decoder = Decoder.Decoder(self.decoder_model, self.decoder_loss, self.decoder_optimizer)  # TODO: check how to use feature dims
 
     def init_buffer(self):
         self._buffer = self.buffer_class(list(self.image_dim), self.latent_dim, self.buffer_size, to_gray=True, flatten=True)
