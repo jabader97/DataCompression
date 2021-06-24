@@ -17,7 +17,7 @@ class AE(torch.nn.Module):
 
 
 class CNN_AE(torch.nn.Module):
-    # in_dims and out_dims in shape HxWxC (can pass image.shape)
+    # in_dims and out_dims in shape CxHxW (can pass image.shape)
     def __init__(self, in_dims, out_dims):
         super().__init__()
         ks = (out_dims[1] - in_dims[1] + 1, out_dims[2] - in_dims[2] + 1)
