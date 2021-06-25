@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import io
+from matplotlib import pyplot as plt
 
 class Decoder_Buffer():
     """A simple buffer for the decoder
@@ -8,10 +9,10 @@ class Decoder_Buffer():
 
     def __init__(self, image_dim, latent_dim, buffer_size, to_gray = False, flatten = False) -> None:
         if to_gray:
-            image_dim = image_dim[1:] # if rgb to gray, rgb dim (0) gets dropped
+            image_dim[0]=1 # if rgb to gray, rgb dim (0) becomes of size 1 instead of 3
         if flatten:
             image_dim = [int(np.prod(image_dim))] # a flat image is multiplication of all its layers
-        self.images = torch.zeros([buffer_size] + image_dim)
+        self.images = torch.zeros([buffer_size] + image_dim, dtype=torch.uint8)
         self.latents = torch.zeros([buffer_size, latent_dim])
         self.pointer = 0
         self.buffer_size = buffer_size
@@ -58,10 +59,17 @@ class Decoder_Buffer():
         """
         r, g, b = rgb[0,:,:], rgb[1,:,:], rgb[2,:,:]
         gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-        return gray
+        return torch.unsqueeze(gray, dim=0)
 
     def get_image_dims(self):
         return list(self.images.shape[1:])
+
+    def visualize_random_image(self):
+        image = self.sample(1)[0][0]
+        image = image.transpose(0,2)
+        image = image.transpose(0,1)
+        plt.imshow(image)
+        plt.show()
 
 
     def save(self, filepath):
