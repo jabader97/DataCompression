@@ -11,9 +11,7 @@ class Metric:
         accuracy = self.loss(original, reconstructed)
 
         # get the latent bit rate
-        size = sys.getsizeof(latent)
-        dims = list(original[0].size())
-        for dim in dims:
-            size /= dim
+        size = sys.getsizeof(latent) * 8
+        size = size / len(latent)
 
-        return accuracy.item(), size * 8
+        return accuracy.item(), size
