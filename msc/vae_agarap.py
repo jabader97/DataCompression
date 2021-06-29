@@ -29,15 +29,36 @@ class AE_network(torch.nn.Module):
         reconstructed = torch.relu(activation)
         return reconstructed, code
 
+    
+class CNN_AE_network(torch.nn.Module):
+    # in_dims and out_dims in shape CxHxW (can pass image.shape)
+    def __init__(self, in_dims, out_dims):
+        super().__init__()
+        ks = (in_dims[1] - out_dims[1] + 1, in_dims[2] - out_dims[2] + 1)
+        s = (1, 1)
+        self.decoder_hidden_layer = torch.nn.Conv2d(
+            in_channels=in_dims[0], out_channels=out_dims[0], kernel_size=ks, stride=s
+        )
+        self.decoder_hidden_layer2 = torch.nn.ConvTranspose2d(
+            in_channels=out_dims[0], out_channels=in_dims[0], kernel_size=ks, stride=s
+        )
 
+    def forward(self, original):
+        latent = self.decoder_hidden_layer(original)
+        latent = torch.relu(latent)
+        output = self.decoder_hidden_layer2(latent)
+        output = torch.relu(output)
+        return output, latent
+
+    
 class AE:
     def __init__(self):
         self.model = None
 
-    def train_ae(self, train_data, epochs=10):
+    def train_ae(self, train_data, model, epochs=10):
         train_data = torch.from_numpy(train_data).float()
-
-        self.model = AE_network(input_shape=len(train_data[0]))
+        self.model = model
+        # exp: AE_network(input_shape=len(train_data[0]))
         optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         criterion = torch.nn.MSELoss()
         for epoch in range(epochs):
@@ -49,6 +70,7 @@ class AE:
                 optimizer.zero_grad()
 
                 # compute reconstructions
+                data = torch.unsqueeze(data, 0)  # can remove this for AE_network
                 outputs, _ = self.model(data)
 
                 # compute training reconstruction loss
@@ -73,6 +95,7 @@ class AE:
         original_images = torch.from_numpy(original_images).float()
         latent_images = []
         for image in original_images:
+            image = torch.unsqueeze(image, 0)  # can remove this for AE_network
             _, latent = self.model(image)
             latent_images.append(latent.tolist())
         return latent_images
