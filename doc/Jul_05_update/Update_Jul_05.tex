@@ -34,108 +34,100 @@
 
 \section{Introduction and Overview}
     Lossless compression tries to compress data such that the the original data
-    can be perfectly reconstructed when decompressing again. However, the
-    theoretical limit is given by the entropy of the data. If one wishes to
-    compress further, inevitable some data will get lost. In lossy compression
+    can be perfectly reconstructed upon decompression. However, the
+    theoretical limit is given by the data entropy. If one wishes to
+    compress further, inevitably some data will be lost. In lossy compression,
     one therefore tries to either minimize the loss for a given bitrate or the
-    other way around. But if we loose some data, which data should be lost?
-    Traditional loss-functions for image compression like L2-Loss give all data
-    the same value, however it clearly seems like some parts of the image retain
-    more valuable information than others. Research has therefore tried to
-    construct better metrics like MSSSIM, but finding better metrics is not
-    straightforward. This issue is emphasized further when moving to extremly
-    lossy compression, where the data is compressed strongly.
-    
-    But going one step back, which data should be kept in an image at all? It
-    seems reasonable to say that at least data that "matters" to humans. For
-    example, if the sky in the background of an image is of slightly different
-    colour will not make a difference for detecting a car in the foreground.
-    However, if the task is to detect the weather, this difference will suddenly
-    become significant again. Consequently, the task/goals often define the
-    importance. We had the idea to define a very general task: The information,
-    that enables us to act in an environment should be kept. In machine
-    learning, "acting" and "environment" is the area of reinforcement learning.
-    In this work, we therefore try to combine reinforcement learning with
-    compression as a way to judge which informations are important enough to be
-    compressed, and which informations can be dropped, especially when using
+    other way around. But if we lose some data, which data should be lost?
+    Traditional loss-functions for image compression, like L2-Loss, give all data
+    the same value. However, it seems like some parts of the image retain
+    more valuable information than others. Research has tried to
+    construct better metrics like MS-SSIM, but finding better metrics is not
+    straightforward. This issue is emphasized further in extremely
+    lossy compression.
+
+    Going one step back, which data should even be kept in an image? It
+    seems reasonable that at least "important" data should be kept. For
+    example, if the sky in the background of an image is of slightly different,
+    colour then it will not make a difference when detecting a car in the foreground.
+    But if the task is to detect the weather, this difference is suddenly
+    significant. Consequently, the task/goals often define the
+    importance. We had the idea to define a very general task: keep information
+    that enables us to act in an environment. In ML, "acting" and "environment" comes from reinforcement learning.
+    In this work, we therefore try to combine RL with
+    compression as a way to judge which information should be kept versus dropped, especially in
     very lossy compression.
 
-    Data compression normally consists of three parts: An encoder, a decoder,
-    and a loss-function. The encoder tries to compress the information, the
-    decoder decompresses again and the metric is used to judge the result.
-    Reinforcement learning agents often have a so called feature extractor,
-    which extracts relevant information of the input data. If our goal is to
-    retain informations that are important for acting, the features extractor
-    seems like a natural choice for the encoder. The decoder is similar as in
-    normal VAEs, it is just a normal deep neural network which tries to
-    reconstruct the original data. As discussed in the beginning, a good
-    loss-function for optimizing the decoder is hard to find. Here we have to
-    approaches: On the one hand, using traditional metrics ensures that the
-    output image is close to the original one, although in a very unflexible
-    way. On the other hand, if our task is to only retain information that
-    enables to act, it seems to be reasonable to let the reinforcement learning
-    agent judge wether it can still act on the reconstructed images. In the end,
-    we think trying out both approaches or using a combination will yield the
+    Data compression normally consists of three parts: an encoder, a decoder,
+    and a evaluation-function. The encoder compresses the information, the
+    decoder decompresses, and the metric judges the result. Our goal is to start by considering these separately: this way, a single component can be switched out without affecting the others. We will only tie these components together if considering them separately does not yield quality results.
+
+    RL agents often have a "feature extractor",
+    which extracts relevant information from the input data. If our goal is to
+    retain information important for acting, the features extractor
+    seems like a natural encoder choice. The decoder, similar to
+    normal VAEs, is just a deep NN trying to
+    reconstruct the original data. As discussed earlier, a good
+    loss-function for the decoder is hard to find. Here we have two
+    approaches: on the one hand, using traditional metrics ensures that the
+    output image is close to the original, although very rigidly. On the other hand, if our task is to only retain information that
+    enables the agent to act, it seems reasonable to let the RL
+    agent judge whether it can still act on the reconstructed images. In the end,
+    we think trying out both approaches, or using a combination, will yield the
     best results.
-    
+
 \section{Methods}
-    \subsection{Encoder/Rl agent}
-        In our work, we will treat the RL agent mostly as a black box. There are
-        enough RL-libaries out there that can be used, and an out of the box
-        agent will be flexible enough for our purpose. Additionally, this means
-        agents can be swapped out easily and different agent architectures can
-        be tried. Therefore we will refer to the loss the agent is trying to
-        minimize just as the $L_{RL}$. Just optimizing this loss however
-        forgets about our second task: Compressing the input data. In
+    \subsection{Encoder/RL agent}
+        In our work, we will treat the original RL agent mostly as a black box, as an out of the box
+        agent will be flexible enough as a starting point. Additionally, this means
+        agents can be swapped out easily and different agent architectures tried. Therefore we will refer to the out-of-the-box loss the agent
+        minimizes as $L_{RL}$. But just optimizing this loss
+        forgets about our second task: compressing the data. In
         Variational Inference, the compression performance is optimized by
         minimizing $D_{KL} (q_\phi (z\vert x) \Vert p(z))$, where $q_\phi
         (z\vert x)$ is the distribution over the latent space for a given input
-        $x$, and $p(z)$ is the distribution over the latents used for enconding
-        of the latents. Therefore the new loss for the agent becomes:
-        \begin{equation}
-            E_{x \sim env} [L_{RL} + D_{KL} (q_\phi (z\vert x) \Vert p(z))]
-        \end{equation}
+        $x$, and $p(z)$ is the distribution over the latents chosen to encode them.
         % TODO: discuss that x also depends on agent? off-policy vs on-policy
-        One problem of neural networks for encoding $x$ to $z$ is that they use
-        floating point numbers. This results in a very high entropy, if the
-        precision should be kept. One can reduce this entropy by just rounding
+        One problem of NNs for encoding is that they use
+        floating point numbers. This results in a very high entropy. One can reduce this entropy by rounding
         the values, for example to the nearest integer. However, this means the
-        agent also needs to be robust to rounding, otherwise one could not
-        guarantee that valuable information will not be encoded in small digits,
-        which will consequently be destroyed in the rounding process. We try to
-        fix this issue by adding some random noise to the latents during
-        training instead of rounding, so that the agent becomes more stable against small
-        distortions and consequently also rounding. During testing however, this
-        noise will be replaced by the rounding.
-        
-        Next we need a way to choose $p(z)$ and to estimate $q_\phi (z\vert x)$.
+        agent needs to be robust to rounding, otherwise  valuable information could be encoded in small digits
+        and consequently destroyed in the rounding process. We try to
+        fix this by adding random noise to the latents during
+        training, so that the agent becomes more stable against small
+        distortions and consequently rounding. During testing, this
+        noise will be replaced by by rounding. Therefore the loss the agent will actually be trained on becomes:
+        \begin{equation}
+            E_{x \sim env} [L_{RL} + D_{KL} (q_\phi (z\vert x) \Vert p(z)) + \epsilon]
+        \end{equation}
+        where $\epsilon ~ Uni[-\frac{\epsilon_0}{2}, \frac{\epsilon_0}{2}]$ and $\epsilon_0$ is the size of the rounding intervals.
+
+        Next we need a way to choose $p(z)$ and estimate $q_\phi (z\vert x)$.
         We choose $p(z) \sim \mathcal{N}(0, \sigma^2)$, where $\sigma^2$ will
         either be fixed at the beginning or learned during training. $p(z
-        \vert x) \sim \mathcal{N}(\mu , \sigma^2)$ where $\mu, sigma^2$ will be
+        \vert x) \sim \mathcal{N}(\mu , \sigma^2)$ where $\mu, \sigma^2$ will be
         learned during training.
 
     \subsection{Decoder}\label{methods:Decoder}
-        As mentioned in the introduction, the decoder will just be a normal deep
-        neural network. For the loss of the decoder there are several different
-        choices: First we can use a normal L2 loss or variants like MSSSIM. As
-        already discussed, this might however be a suboptimal metric. Instead
+        As mentioned earlier, the decoder will be a normal deep NN. For the decoder loss there are several
+        choices: first, we can use L2 loss or variants like MS-SSIM. However, this may be a suboptimal metric. Instead
         also the performance of the agent can be used as a loss. To simplify
-        this loss a bit and not running the environment during training of the
-        decoder, we will optimize the L2-distance between the latents input for
+        this loss and avoid running the environment during training of the
+        decoder (which would be time-costly), we will first try to optimize the L2-distance between the latents input for
         the decoder and the latents the agent generates on the reconstruction of
-        the decoder. By the time we train the decoder, the encoder will already
-        be fixed, therefore no problem arises for optimization.
+        the decoder. By the time we train the decoder, the encoder will
+        be fixed, therefore cause no time problem.
 
     \subsection{Evaluation metric}
         After training, we need a way to evaluate our compression technique.
         Normally this will be done by measuring $L = L_{distortion} + L_{rate}$.
-        $L_{rate}$ is given by the entropy of the latents, and we will estimate this over
-        the test data. $L_{distortion}$ follows the same as in
-        \ref{methods:Decoder}. We can either use a normal Loss or evaluate it by
-        the agent again. Here we however try to use a seperatly trained agent,
-        to eliminate possible benefits the encoder could have by using the same
-        agent for evaluation as for training. This will also make results
-        comparable between different runs. In the end, we will report both traditional
+        $L_{rate}$ is given by the latent entropy estimated over
+        the test data. $L_{distortion}$ follows as in
+        \ref{methods:Decoder}: we can either use a pre-defined Loss-function or evaluate with
+        the agent. Here we would use a separately trained agent,
+        to eliminate benefiting the encoder by using the same
+        agent for evaluation and training. This will also make results
+        comparable between runs. In the end, we will report both traditional
         losses and agent loss to show different strengths and weaknesses
         compared to other methods. 
         
