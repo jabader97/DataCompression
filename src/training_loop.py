@@ -92,7 +92,7 @@ class Trainer(BaseModel):
         self._Decoder = Decoder.Decoder(self.decoder_model, self.decoder_loss, self.decoder_optimizer)  # TODO: check how to use feature dims
 
     def init_buffer(self):
-        self._buffer = self.buffer_class(list(self.image_dim), self.latent_dim, self.buffer_size, to_gray=False, flatten=False)
+        self._buffer = self.buffer_class(list(self.image_dim), self.latent_dim, self.buffer_size, to_gray=False, flatten=True)
 
 
 #---------------------- Train methods -----------------------------------------        
