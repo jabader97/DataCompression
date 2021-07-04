@@ -12,7 +12,7 @@ class Decoder_Buffer():
             image_dim[0]=1 # if rgb to gray, rgb dim (0) becomes of size 1 instead of 3
         if flatten:
             image_dim = [int(np.prod(image_dim))] # a flat image is multiplication of all its layers
-        self.images = torch.zeros([buffer_size] + image_dim, dtype=torch.uint8)
+        self.images = torch.zeros([buffer_size] + image_dim) # , dtype=torch.uint8), although values are integer, we need float for forward pass
         self.latents = torch.zeros([buffer_size, latent_dim])
         self.pointer = 0
         self.buffer_size = buffer_size
@@ -70,6 +70,9 @@ class Decoder_Buffer():
         image = image.transpose(0,1)
         plt.imshow(image)
         plt.show()
+
+    def get_all(self):
+        return self.images[:self.pointer], self.latents[:self.pointer]
 
 
     def save(self, filepath):
