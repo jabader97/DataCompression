@@ -8,11 +8,9 @@ from torch.nn import functional as F
 
 from stable_baselines3.common import logger
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticPolicy
+from DataCompression.src.PPO_KL.policies import ActorCriticPolicy  # replace this bz custom import for _get_latent
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
-
-
 
 
 class PPO(OnPolicyAlgorithm):
@@ -94,6 +92,8 @@ class PPO(OnPolicyAlgorithm):
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
         alpha: float = 1,
+        epsilon: float = 1,
+        p_std: Optional[float] = None,
         # --------------------------------------------------------------------------------
     ):
 
@@ -147,6 +147,12 @@ class PPO(OnPolicyAlgorithm):
         self.clip_range_vf = clip_range_vf
         self.target_kl = target_kl
 
+        # --------------------------------------------------------------------------------
+        self.alpha = alpha,
+        self.epsilon = epsilon,
+        self.p_std = p_std,
+        # --------------------------------------------------------------------------------
+
         if _init_setup_model:
             self._setup_model()
 
@@ -183,12 +189,18 @@ class PPO(OnPolicyAlgorithm):
         enc_out_dim = len(rollout_data.flatten())
         latent = self.policy.features_extractor(rollout_data)
         latent_dim = len(latent.flatten())
-        fc_mu = th.nn.Linear(enc_out_dim, latent_dim)
-        fc_var = th.nn.Linear(enc_out_dim, latent_dim)
+        fc_mu = th.nn.Linear(enc_out_dim, latent_dim)  # TODO move these earlier
+        fc_var = th.nn.Linear(enc_out_dim, latent_dim)  # TODO move these earlier
+        optimizer_mu = th.optim.SGD(fc_mu.parameters())  # TODO move these earlier
+        optimizer_var = th.optim.SGD(fc_var.parameters())  # TODO move these earlier
         # --------------------------------------------------------------------------------
 
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
+            # --------------------------------------------------------------------------------
+            optimizer_mu.zero_grad()
+            optimizer_var.zero_grad()
+            # --------------------------------------------------------------------------------
             approx_kl_divs = []
             # Do a complete pass on the rollout buffer
             for rollout_data in self.rollout_buffer.get(self.batch_size):
@@ -247,6 +259,7 @@ class PPO(OnPolicyAlgorithm):
                 loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss
 
                 # --------------------------------------------------------------------------------
+                # add the KL divergence
                 latent = self.policy.features_extractor(rollout_data)
                 mu = fc_mu(latent)
                 log_var = fc_var(latent)
@@ -257,11 +270,13 @@ class PPO(OnPolicyAlgorithm):
 
                 loss = loss + self.alpha * kl
                 # --------------------------------------------------------------------------------
-
-
                 # Optimization step
                 self.policy.optimizer.zero_grad()
                 loss.backward()
+                # --------------------------------------------------------------------------------
+                optimizer_var.step()
+                optimizer_mu.step()
+                # --------------------------------------------------------------------------------
                 # Clip grad norm
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.optimizer.step()
@@ -317,8 +332,9 @@ class PPO(OnPolicyAlgorithm):
             reset_num_timesteps=reset_num_timesteps,
         )
 
+    # --------------------------------------------------------------------------------
     def kl_div(self, z, mu, std):
-        p = th.distributions.Normal(th.zeros_like(mu), th.ones_like(std))
+        p = th.distributions.Normal(th.zeros_like(mu), self.p_std)
         q = th.distributions.Normal(mu, std)
 
         log_qzx = q.log_prob(z)
@@ -326,4 +342,5 @@ class PPO(OnPolicyAlgorithm):
         kl = log_qzx - log_pz
         kl = kl.sum(-1)
         return kl
+    # --------------------------------------------------------------------------------
 
