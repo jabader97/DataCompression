@@ -92,8 +92,8 @@ class PPO(OnPolicyAlgorithm):
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
         alpha: float = 1,
-        epsilon: float = 1,
-        p_std: Optional[float] = None,
+        # epsilon: float = 1,
+        # p_std: Optional[float] = None,
         # --------------------------------------------------------------------------------
     ):
 
@@ -149,8 +149,12 @@ class PPO(OnPolicyAlgorithm):
 
         # --------------------------------------------------------------------------------
         self.alpha = alpha,
-        self.epsilon = epsilon,
-        self.p_std = p_std,
+        self.fc_mu = None,
+        self.fc_var = None,
+        self.optimizer_mu = None,
+        self.optimizer_var = None,
+        # self.epsilon = epsilon,
+        # self.p_std = p_std,
         # --------------------------------------------------------------------------------
 
         if _init_setup_model:
@@ -166,6 +170,16 @@ class PPO(OnPolicyAlgorithm):
                 assert self.clip_range_vf > 0, "`clip_range_vf` must be positive, " "pass `None` to deactivate vf clipping"
 
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
+        # --------------------------------------------------------------------------------
+        # make the mean and variance functions
+        # input_dim = np.prod(self.policy.observation_space.shape)  #  TODO sanity check on the enc_out_dim?
+        enc_out_dim = self.policy.features_dim
+        latent_dim = self.policy.features_dim
+        self.fc_mu = th.nn.Linear(enc_out_dim, latent_dim)
+        self.fc_var = th.nn.Linear(enc_out_dim, latent_dim)
+        self.optimizer_mu = th.optim.SGD(self.fc_mu.parameters(), lr=1e-4)  # can change these to allow input lr
+        self.optimizer_var = th.optim.SGD(self.fc_var.parameters(), lr=1e-4)
+        # --------------------------------------------------------------------------------
 
     def train(self) -> None:
         """
@@ -183,23 +197,11 @@ class PPO(OnPolicyAlgorithm):
         pg_losses, value_losses = [], []
         clip_fractions = []
 
-        # --------------------------------------------------------------------------------
-        # make the mean and variance functions
-        rollout_data = self.rollout_buffer.get(self.batch_size)[0]
-        enc_out_dim = len(rollout_data.flatten())
-        latent = self.policy.features_extractor(rollout_data)
-        latent_dim = len(latent.flatten())
-        fc_mu = th.nn.Linear(enc_out_dim, latent_dim)  # TODO move these earlier
-        fc_var = th.nn.Linear(enc_out_dim, latent_dim)  # TODO move these earlier
-        optimizer_mu = th.optim.SGD(fc_mu.parameters())  # TODO move these earlier
-        optimizer_var = th.optim.SGD(fc_var.parameters())  # TODO move these earlier
-        # --------------------------------------------------------------------------------
-
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
             # --------------------------------------------------------------------------------
-            optimizer_mu.zero_grad()
-            optimizer_var.zero_grad()
+            self.optimizer_mu.zero_grad()
+            self.optimizer_var.zero_grad()
             # --------------------------------------------------------------------------------
             approx_kl_divs = []
             # Do a complete pass on the rollout buffer
@@ -210,7 +212,6 @@ class PPO(OnPolicyAlgorithm):
                     actions = rollout_data.actions.long().flatten()
 
                 # Re-sample the noise matrix because the log_std has changed
-                # TODO: investigate why there is no issue with the gradient
                 # if that line is commented (as in SAC)
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
@@ -260,9 +261,11 @@ class PPO(OnPolicyAlgorithm):
 
                 # --------------------------------------------------------------------------------
                 # add the KL divergence
-                latent = self.policy.features_extractor(rollout_data)
-                mu = fc_mu(latent)
-                log_var = fc_var(latent)
+                latent = self.policy.features_extractor(rollout_data.observations)
+                mu = self.fc_mu(latent)
+                log_var = self.fc_var(latent)
+                # TODO problem: sometimes mu and log_var are either extremely large or extremely small, causing
+                # TODO log_prob to return nans/-inf in the kl_div class, messing up the loss
                 std = th.exp(log_var / 2)
                 q = th.distributions.Normal(mu, std)
                 z = q.rsample()
@@ -274,8 +277,8 @@ class PPO(OnPolicyAlgorithm):
                 self.policy.optimizer.zero_grad()
                 loss.backward()
                 # --------------------------------------------------------------------------------
-                optimizer_var.step()
-                optimizer_mu.step()
+                self.optimizer_var.step()
+                self.optimizer_mu.step()
                 # --------------------------------------------------------------------------------
                 # Clip grad norm
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
@@ -334,7 +337,7 @@ class PPO(OnPolicyAlgorithm):
 
     # --------------------------------------------------------------------------------
     def kl_div(self, z, mu, std):
-        p = th.distributions.Normal(th.zeros_like(mu), self.p_std)
+        p = th.distributions.Normal(th.zeros_like(mu), th.ones_like(std))
         q = th.distributions.Normal(mu, std)
 
         log_qzx = q.log_prob(z)

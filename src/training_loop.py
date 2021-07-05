@@ -10,13 +10,13 @@ sys.path.append(os.getcwd())
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
 
-from msc.encoder import Encoder
-from stable_baselines3 import PPO
-import gym
+from DataCompression.msc.encoder import Encoder
+# from stable_baselines3 import PPO
+from DataCompression.src.PPO_KL.ppo import PPO
 from tqdm import tqdm
-from src.buffer import Decoder_Buffer
-from matplotlib import pyplot as plt
-import src.decoder_MSE as Decoder
+from DataCompression.src.buffer import Decoder_Buffer
+import DataCompression.src.decoder_MSE as Decoder
+
 
 class Trainer(BaseModel):
     """A Trainer class for the combined model
@@ -27,8 +27,8 @@ class Trainer(BaseModel):
     save_path: str = "P:/Dokumente/3 Uni/SoSe21/Data_Compression/DataCompression" # my save path ;) 
 
     # rl agent parameters
-    environment_name: str =  "BreakoutNoFrameskip-v4"
-    encoder_class: Any = Encoder # at the moment, you cannot change this variable!!
+    environment_name: str = "BreakoutNoFrameskip-v4"
+    encoder_class: Any = Encoder  # at the moment, you cannot change this variable!!
     use_custom_encoder: bool = True
     rl_agent_type: object = PPO
     rl_agent_train_steps: int = 10

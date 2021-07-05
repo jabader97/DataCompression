@@ -264,8 +264,8 @@ class ActorCriticPolicy(BasePolicy):
         features = self.extract_features(obs)
         # --------------------------------
         # add some random noise
-        eps = np.random.uniform(0, self.epsilon) - (self.epsilon / 2)
-        features += eps
+        # eps = np.random.uniform(0, self.epsilon) - (self.epsilon / 2)
+        # features += eps
         # --------------------------------
         latent_pi, latent_vf = self.mlp_extractor(features)
 
