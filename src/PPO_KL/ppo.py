@@ -264,14 +264,15 @@ class PPO(OnPolicyAlgorithm):
                 latent = self.policy.features_extractor(rollout_data.observations)
                 mu = self.fc_mu(latent)
                 log_var = self.fc_var(latent)
-                # TODO problem: sometimes mu and log_var are either extremely large or extremely small, causing
-                # TODO log_prob to return nans/-inf in the kl_div class, messing up the loss
+
                 std = th.exp(log_var / 2)
+                sig = th.nn.Sigmoid()
+                std = sig(std) * 100
                 q = th.distributions.Normal(mu, std)
                 z = q.rsample()
                 kl = self.kl_div(z, mu, std)
-
-                loss = loss + self.alpha * kl
+                kl = th.sum(kl)
+                loss = loss + self.alpha[0] * kl
                 # --------------------------------------------------------------------------------
                 # Optimization step
                 self.policy.optimizer.zero_grad()
@@ -339,7 +340,6 @@ class PPO(OnPolicyAlgorithm):
     def kl_div(self, z, mu, std):
         p = th.distributions.Normal(th.zeros_like(mu), th.ones_like(std))
         q = th.distributions.Normal(mu, std)
-
         log_qzx = q.log_prob(z)
         log_pz = p.log_prob(z)
         kl = log_qzx - log_pz
