@@ -12,7 +12,7 @@ sys.path.append(dir_path)
 
 from DataCompression.msc.encoder import Encoder
 # from stable_baselines3 import PPO
-from DataCompression.src.PPO_KL.ppo import PPO
+from DataCompression.src.PPO_Noise.ppo import PPO
 from tqdm import tqdm
 from DataCompression.src.buffer import Decoder_Buffer
 import DataCompression.src.decoder_MSE as Decoder

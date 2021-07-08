@@ -8,7 +8,9 @@ from torch.nn import functional as F
 
 from stable_baselines3.common import logger
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from stable_baselines3.common.policies import ActorCriticPolicy
+# --------------------------------------------------------------------------------
+from DataCompression.src.PPO_Noise.policies import ActorCriticPolicy, ActorCriticCnnPolicy
+# --------------------------------------------------------------------------------
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
@@ -91,7 +93,7 @@ class PPO(OnPolicyAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
-        alpha: float = 1e-5,
+        alpha: float = 1e-10,
         # --------------------------------------------------------------------------------
     ):
 
@@ -146,6 +148,8 @@ class PPO(OnPolicyAlgorithm):
         self.target_kl = target_kl
         # --------------------------------------------------------------------------------
         self.alpha = alpha,
+        self.policy_class = ActorCriticCnnPolicy,  # TODO: note, this workaround made it less flexible
+        self.policy_class = self.policy_class[0]
         # --------------------------------------------------------------------------------
 
         if _init_setup_model:
@@ -248,10 +252,7 @@ class PPO(OnPolicyAlgorithm):
 
                 # --------------------------------------------------------------------------------
                 # ADD TO THE LOSS
-                # add noise to the latent layer
                 latent = self.policy.features_extractor(rollout_data.observations)
-                noise = th.rand(latent.shape)
-                latent += noise
                 # learn the variance
                 p_var = self.fc_var(latent)
                 p_var = th.exp(p_var / 2)
@@ -260,7 +261,7 @@ class PPO(OnPolicyAlgorithm):
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
                 p_val = th.sum(p.log_prob(latent))
                 # add this to the loss
-                loss = loss + self.alpha[0] * p_val
+                # loss = loss + self.alpha[0] * p_val
                 # --------------------------------------------------------------------------------
 
                 # Optimization step
