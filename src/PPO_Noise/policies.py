@@ -79,6 +79,9 @@ class ActorCriticPolicy(BasePolicy):
         normalize_images: bool = True,
         optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        # --------------------------------
+        error_thresh: float = 1e-3,  # if want to change default, better to do in CNNActorCritic below (overwrites this)
+        # --------------------------------
     ):
 
         if optimizer_kwargs is None:
@@ -132,6 +135,10 @@ class ActorCriticPolicy(BasePolicy):
         self.action_dist = make_proba_distribution(action_space, use_sde=use_sde, dist_kwargs=dist_kwargs)
 
         self._build(lr_schedule)
+
+        # --------------------------------
+        self.error_thresh = error_thresh
+        # --------------------------------
 
     def _get_constructor_parameters(self) -> Dict[str, Any]:
         data = super()._get_constructor_parameters()
@@ -216,7 +223,6 @@ class ActorCriticPolicy(BasePolicy):
         # Init weights: use orthogonal initialization
         # with small initial weight for the output
         if self.ortho_init:
-            # TODO: check for features_extractor
             # Values from stable-baselines.
             # features_extractor/mlp values are
             # originally from openai/baselines (default gains/init_scales).
@@ -259,7 +265,7 @@ class ActorCriticPolicy(BasePolicy):
         features = self.extract_features(obs)
         # --------------------------------
         # add some noise
-        noise = th.rand(features.shape) * 1e-2
+        noise = th.rand(features.shape) * self.error_thresh - (self.error_thresh / 2)
         features += noise
         # --------------------------------
         latent_pi, latent_vf = self.mlp_extractor(features)
@@ -375,6 +381,9 @@ class ActorCriticCnnPolicy(ActorCriticPolicy):
         normalize_images: bool = True,
         optimizer_class: Type[th.optim.Optimizer] = th.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        # --------------------------------
+        error_thresh: float = 1e-3,
+        # --------------------------------
     ):
         super(ActorCriticCnnPolicy, self).__init__(
             observation_space,
@@ -394,6 +403,9 @@ class ActorCriticCnnPolicy(ActorCriticPolicy):
             normalize_images,
             optimizer_class,
             optimizer_kwargs,
+            # --------------------------------
+            error_thresh,
+            # --------------------------------
         )
 
 # -----------------------------------------

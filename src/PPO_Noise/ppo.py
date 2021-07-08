@@ -93,7 +93,8 @@ class PPO(OnPolicyAlgorithm):
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
-        alpha: float = 1e-10,
+        # alpha: float = 1e-10,
+        alpha: float = 0,
         # --------------------------------------------------------------------------------
     ):
 
@@ -261,7 +262,7 @@ class PPO(OnPolicyAlgorithm):
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
                 p_val = th.sum(p.log_prob(latent))
                 # add this to the loss
-                # loss = loss + self.alpha[0] * p_val
+                # loss = loss + self.alpha[0] * p_val  # TODO this break the gradient? (breaks it even if alpha = 0)
                 # --------------------------------------------------------------------------------
 
                 # Optimization step

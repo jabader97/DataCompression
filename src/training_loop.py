@@ -6,16 +6,15 @@ from typing import List, Any
 from pydantic import BaseModel
 import torch
 import numpy as np
-sys.path.append(os.getcwd())
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(dir_path)
-
 from DataCompression.msc.encoder import Encoder
 # from stable_baselines3 import PPO
 from DataCompression.src.PPO_Noise.ppo import PPO
 from tqdm import tqdm
 from DataCompression.src.buffer import Decoder_Buffer
 import DataCompression.src.decoder_MSE as Decoder
+sys.path.append(os.getcwd())
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path)
 
 
 class Trainer(BaseModel):
@@ -32,11 +31,12 @@ class Trainer(BaseModel):
     use_custom_encoder: bool = True
     rl_agent_type: object = PPO
     rl_agent_train_steps: int = 10
+    added_error: float = 1e-3  # this should correspond to the interval size when rounding for compression
 
     # Decoder Parameters
-    decoder_train_steps: int = 10 # TODO: look over class variables
+    decoder_train_steps: int = 10  # TODO: look over class variables
     decoder_batch_size: int = 100
-    decoder_class: object = None # TODO: add class
+    decoder_class: object = None  # TODO: add class
     decoder_model: object = None
     decoder_loss: object = torch.nn.MSELoss()
     decoder_lr: float = 1e-4
@@ -44,7 +44,7 @@ class Trainer(BaseModel):
 
     # buffer
     buffer_class = Decoder_Buffer
-    buffer_size: int = 1000 # dont write 1e4, need int not float
+    buffer_size: int = 1000  # dont write 1e4, need int not float
 
     # internal variables for tracking
     _encoder_network: object = None
@@ -52,7 +52,6 @@ class Trainer(BaseModel):
     _rl_agent: object = None
     _Decoder: object = None
     _buffer: object = None
-
 
     # pydantic config
     class Config:
@@ -66,13 +65,13 @@ class Trainer(BaseModel):
         self.init_buffer()
         self.init_Decoder()
 
-        
     def init_rl_agent(self):
         """Init RL agent
         """
         policy_kwargs = dict(
-        features_extractor_class=self.encoder_class,
-        features_extractor_kwargs=dict(features_dim=self.latent_dim)) # defines output feature size
+            features_extractor_class=self.encoder_class,
+            features_extractor_kwargs=dict(features_dim=self.latent_dim),
+            error_thresh=self.added_error)  # defines output feature size
         if not self.use_custom_encoder:
             from stable_baselines3.common.torch_layers import NatureCNN
             policy_kwargs["features_extractor_class"] = NatureCNN
@@ -95,7 +94,7 @@ class Trainer(BaseModel):
         self._buffer = self.buffer_class(list(self.image_dim), self.latent_dim, self.buffer_size, to_gray=False, flatten=True)
 
 
-#---------------------- Train methods -----------------------------------------        
+# ---------------------- Train methods -----------------------------------------
 
     def train_rl_agent(self, epochs, save_every=None):
         if save_every:
@@ -105,7 +104,6 @@ class Trainer(BaseModel):
                 print("\n Saved RL agent")
         else:
             self._rl_agent.learn(epochs)
-        
 
     def train_Decoder(self, epochs, batch_size, save_every=None):
         # TODO add images
@@ -145,7 +143,6 @@ class Trainer(BaseModel):
                 observation = self._env.reset()
 
         self._env.close()
-
 
     def random_env_action(self, dummy=None):
         """Chooses a random env action, mainly just wraps the action to the format expected by the agent
