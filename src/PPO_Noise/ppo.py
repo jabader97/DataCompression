@@ -94,7 +94,7 @@ class PPO(OnPolicyAlgorithm):
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
         # alpha: float = 1e-10,
-        alpha: float = 0,  # TODO this shouldn't be 0
+        alpha: float = 1,
         # --------------------------------------------------------------------------------
     ):
 
@@ -208,7 +208,7 @@ class PPO(OnPolicyAlgorithm):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy, latent = self.policy.evaluate_actions(rollout_data.observations, actions)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
@@ -253,16 +253,15 @@ class PPO(OnPolicyAlgorithm):
 
                 # --------------------------------------------------------------------------------
                 # ADD TO THE LOSS
-                latent = self.policy.features_extractor(rollout_data.observations)
                 # learn the variance
-                p_var = self.fc_var(latent)  # TODO fix this line from breaking it
+                p_var = self.fc_var(latent)
                 p_var = th.exp(p_var / 2)
                 sig = th.nn.Sigmoid()
                 p_var = sig(p_var) * 100  # this forces it to learn variances that are not too big
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
                 p_val = th.sum(p.log_prob(latent))
                 # add this to the loss
-                loss = loss + self.alpha[0] * p_val  # TODO this break the gradient? (breaks it even if alpha = 0)
+                loss = loss + self.alpha[0] * p_val
                 # --------------------------------------------------------------------------------
 
                 # Optimization step

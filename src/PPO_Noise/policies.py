@@ -245,7 +245,7 @@ class ActorCriticPolicy(BasePolicy):
         :param deterministic: Whether to sample or use deterministic actions
         :return: action, value and log probability of the action
         """
-        latent_pi, latent_vf, latent_sde = self._get_latent(obs)
+        latent_pi, latent_vf, latent_sde, _ = self._get_latent(obs)
         # Evaluate the values for the given observations
         values = self.value_net(latent_vf)
         distribution = self._get_action_dist_from_latent(latent_pi, latent_sde=latent_sde)
@@ -274,7 +274,7 @@ class ActorCriticPolicy(BasePolicy):
         latent_sde = latent_pi
         if self.sde_features_extractor is not None:
             latent_sde = self.sde_features_extractor(features)
-        return latent_pi, latent_vf, latent_sde
+        return latent_pi, latent_vf, latent_sde, features
 
     def _get_action_dist_from_latent(self, latent_pi: th.Tensor, latent_sde: Optional[th.Tensor] = None) -> Distribution:
         """
@@ -308,7 +308,7 @@ class ActorCriticPolicy(BasePolicy):
         :param deterministic: Whether to use stochastic or deterministic actions
         :return: Taken action according to the policy
         """
-        latent_pi, _, latent_sde = self._get_latent(observation)
+        latent_pi, _, latent_sde, _ = self._get_latent(observation)
         distribution = self._get_action_dist_from_latent(latent_pi, latent_sde)
         return distribution.get_actions(deterministic=deterministic)
 
@@ -321,11 +321,11 @@ class ActorCriticPolicy(BasePolicy):
         :return: estimated value, log likelihood of taking those actions
             and entropy of the action distribution.
         """
-        latent_pi, latent_vf, latent_sde = self._get_latent(obs)
+        latent_pi, latent_vf, latent_sde, features = self._get_latent(obs)
         distribution = self._get_action_dist_from_latent(latent_pi, latent_sde)
         log_prob = distribution.log_prob(actions)
         values = self.value_net(latent_vf)
-        return values, log_prob, distribution.entropy()
+        return values, log_prob, distribution.entropy(), features
 
 
 class ActorCriticCnnPolicy(ActorCriticPolicy):
