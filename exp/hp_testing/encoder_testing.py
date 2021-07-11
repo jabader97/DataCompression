@@ -7,7 +7,7 @@ from DataCompression.src.metric import evaluate
 config = {
 "rl_agent_train_steps": 10000,
 "buffer_size": 1000,
-"added_error": 0.5,
+"added_error": 1e-3,
 "alpha": 1,
 }
 mytrainer = Trainer(**config)
