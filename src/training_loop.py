@@ -32,6 +32,7 @@ class Trainer(BaseModel):
     rl_agent_type: object = PPO
     rl_agent_train_steps: int = 10
     added_error: float = 1e-3  # this should correspond to the interval size when rounding for compression
+    alpha: float = 1e-10
 
     # Decoder Parameters
     decoder_train_steps: int = 10  # TODO: look over class variables
@@ -77,7 +78,7 @@ class Trainer(BaseModel):
             policy_kwargs["features_extractor_class"] = NatureCNN
             print("Using default encoder from environment")
 
-        self._rl_agent = self.rl_agent_type("CnnPolicy", self.environment_name, policy_kwargs=policy_kwargs, verbose=1)
+        self._rl_agent = self.rl_agent_type("CnnPolicy", self.environment_name, policy_kwargs=policy_kwargs, verbose=1, alpha=self.alpha)
         self._env = self._rl_agent.env # for easy access to env
         self.image_dim = self._env.reset().shape[1:] 
         self._encoder_network = self._rl_agent.policy.features_extractor # for easy access to encoder

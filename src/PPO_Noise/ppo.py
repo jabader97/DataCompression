@@ -94,7 +94,7 @@ class PPO(OnPolicyAlgorithm):
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
         # alpha: float = 1e-10,
-        alpha: float = 1,
+        alpha: float = 1e-10,  # todo change this back
         # --------------------------------------------------------------------------------
     ):
 
@@ -255,7 +255,6 @@ class PPO(OnPolicyAlgorithm):
                 # ADD TO THE LOSS
                 # learn the variance
                 p_var = self.fc_var(latent)
-                p_var = th.exp(p_var / 2)
                 sig = th.nn.Sigmoid()
                 p_var = sig(p_var) * 100  # this forces it to learn variances that are not too big
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)

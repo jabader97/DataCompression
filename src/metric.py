@@ -24,21 +24,21 @@ def evaluate(encoder, decoder, buffer, flattened=True):
     latents_entropy = entropy(counts)
     print(f"The entropy of the latents is: {latents_entropy}")
 
-    # pass through decoder
-    reconstructed = decoder(latents)
+    # # pass through decoder
+    # reconstructed = decoder(latents)
+    #
+    # # calculate L2 loss on images
+    # mse_loss = MSELoss()
+    # L2_loss = mse_loss(test_images, reconstructed)
+    # print(f"The L2-loss in image space is: {L2_loss}")
+    #
+    # # calculate agent loss
+    # if flattened:
+    #     reconstructed_encoder = torch.reshape(reconstructed, (reconstructed.shape[0], 3, 210, 160))
+    # else:
+    #     reconstructed_encoder = test_images
+    # new_latents = encoder(reconstructed_encoder)
+    # agent_loss = mse_loss(new_latents, latents)
+    # print(f"The L2-loss in agent space is: {agent_loss}")
 
-    # calculate L2 loss on images
-    mse_loss = MSELoss()
-    L2_loss = mse_loss(test_images, reconstructed)
-    print(f"The L2-loss in image space is: {L2_loss}")
-
-    # calculate agent loss
-    if flattened:
-        reconstructed_encoder = torch.reshape(reconstructed, (reconstructed.shape[0], 3, 210, 160))
-    else:
-        reconstructed_encoder = test_images
-    new_latents = encoder(reconstructed_encoder)
-    agent_loss = mse_loss(new_latents, latents)
-    print(f"The L2-loss in agent space is: {agent_loss}")
-
-    return latents_entropy, L2_loss.item(), agent_loss.item()
+    return latents_entropy  # , L2_loss.item(), agent_loss.item()
