@@ -8,7 +8,7 @@ from torch.nn import functional as F
 
 from stable_baselines3.common import logger
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
-from DataCompression.src.PPO_KL.policies import ActorCriticPolicy  # replace this bz custom import for _get_latent
+from DataCompression.src.PPO_KL.policies import ActorCriticPolicy, ActorCriticCnnPolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
@@ -152,7 +152,9 @@ class PPO(OnPolicyAlgorithm):
         self.fc_mu = None,
         self.fc_var = None,
         self.optimizer_mu = None,
-        self.optimizer_var = None,
+        self.optimizer_var = None
+        self.policy_class = ActorCriticCnnPolicy,  # TODO: note, this workaround made it less flexible
+        self.policy_class = self.policy_class[0]
         # self.epsilon = epsilon,
         # self.p_std = p_std,
         # --------------------------------------------------------------------------------
@@ -216,7 +218,7 @@ class PPO(OnPolicyAlgorithm):
                 if self.use_sde:
                     self.policy.reset_noise(self.batch_size)
 
-                values, log_prob, entropy = self.policy.evaluate_actions(rollout_data.observations, actions)
+                values, log_prob, entropy, latent = self.policy.evaluate_actions(rollout_data.observations, actions)
                 values = values.flatten()
                 # Normalize advantage
                 advantages = rollout_data.advantages
@@ -261,7 +263,6 @@ class PPO(OnPolicyAlgorithm):
 
                 # --------------------------------------------------------------------------------
                 # add the KL divergence
-                latent = self.policy.features_extractor(rollout_data.observations)
                 mu = self.fc_mu(latent)
                 log_var = self.fc_var(latent)
 
