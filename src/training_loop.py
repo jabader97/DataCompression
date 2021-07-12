@@ -11,6 +11,7 @@ from DataCompression.msc.encoder import Encoder
 from DataCompression.src.PPO_Noise.ppo import PPO
 from tqdm import tqdm
 from DataCompression.src.buffer import Decoder_Buffer
+from DataCompression.src.metric import evaluate
 import DataCompression.src.decoder_MSE as Decoder
 sys.path.append(os.getcwd())
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -190,6 +191,10 @@ class Trainer(BaseModel):
         if buffer:
             self._buffer.load(filepath)
 
+
+#----------------- evaluation methods---------------------------------------
+    def evaluate(self):
+        return evaluate(self._rl_agent.policy.features_extractor, self._Decoder.model, self._buffer)
 
 
 
