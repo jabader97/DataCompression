@@ -171,7 +171,7 @@ class PPO(OnPolicyAlgorithm):
         enc_out_dim = self.policy.features_dim
         latent_dim = self.policy.features_dim
         self.fc_var = th.nn.Linear(enc_out_dim, latent_dim)
-        self.optimizer_var = th.optim.SGD(self.fc_var.parameters(), lr=1e-4)  # TODO change these to allow input lr
+        self.optimizer_var = th.optim.SGD(self.fc_var.parameters(), lr=1)  # TODO change these to allow input lr
         # --------------------------------------------------------------------------------
 
     def train(self) -> None:
@@ -256,19 +256,26 @@ class PPO(OnPolicyAlgorithm):
                 # learn the variance
                 p_var = self.fc_var(latent)
                 sig = th.nn.Sigmoid()
-                p_var = sig(p_var) * 100  # this forces it to learn variances that are not too big
+                p_var = sig(p_var) * 1  # this forces it to learn variances that are not too big
+                p_var = th.mean(p_var, dim=0)
+
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
-                p_val = th.sum(p.log_prob(latent))
+                p_val = th.mean(p.log_prob(latent))
+                if epoch % 1000 == 0 and self.verbose:
+                    with th.no_grad():
+                        print("P value", th.exp(p_val).item(), "p_val", self.alpha[0] * p_val.item(), "agent loss", loss.item(), "Learned variance", th.mean(p_var).item())
                 # add this to the loss
-                loss = loss + self.alpha[0] * p_val
+                loss = loss - self.alpha[0] * p_val
                 # --------------------------------------------------------------------------------
 
                 # Optimization step
+                self.optimizer_var.zero_grad()
                 self.policy.optimizer.zero_grad()
                 loss.backward()
                 # Clip grad norm
                 th.nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
                 self.policy.optimizer.step()
+                self.optimizer_var.step()
                 approx_kl_divs.append(th.mean(rollout_data.old_log_prob - log_prob).detach().cpu().numpy())
                 # --------------------------------------------------------------------------------
                 self.optimizer_var.step()
