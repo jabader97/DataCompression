@@ -9,7 +9,8 @@ from torch.nn import functional as F
 from stable_baselines3.common import logger
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 # --------------------------------------------------------------------------------
-from DataCompression.src.PPO_Noise.policies import ActorCriticPolicy, ActorCriticCnnPolicy
+from DataCompression.src.new_models.PPO_adaptive_alpha.policies import ActorCriticPolicy, ActorCriticCnnPolicy
+from scipy.stats import entropy as scipy_entropy
 # --------------------------------------------------------------------------------
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
@@ -95,6 +96,9 @@ class PPO(OnPolicyAlgorithm):
         # --------------------------------------------------------------------------------
         # alpha: float = 1e-10,
         alpha: float = 1e-10,  # todo change this back
+        target_mean_entropy = 1,
+        round_digits = 3,
+        burnin = 0
         # --------------------------------------------------------------------------------
     ):
 
@@ -151,6 +155,12 @@ class PPO(OnPolicyAlgorithm):
         self.alpha = alpha,
         self.policy_class = ActorCriticCnnPolicy,  # TODO: note, this workaround made it less flexible
         self.policy_class = self.policy_class[0]
+        # for alpha:
+        self.target_mean_entropy = target_mean_entropy # target entropy to reach
+        self.last_entropies = [] # for saving entropies
+        self.step = 0 # keeping track of steps
+        self.round_digits = round_digits # digits to round for entropy calculation
+        self.burnin = burnin # how long to wait before adapt alpha
         # --------------------------------------------------------------------------------
 
         if _init_setup_model:
@@ -261,11 +271,33 @@ class PPO(OnPolicyAlgorithm):
 
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
                 p_val = th.mean(p.log_prob(latent))
-                if epoch % 1000 == 0 and self.verbose:
+                if self.step % 100 == 0 and self.verbose:
                     with th.no_grad():
                         print("P value", th.exp(p_val).item(), "p_val", self.alpha[0] * p_val.item(), "agent loss", loss.item(), "Learned variance", th.mean(p_var).item())
                 # add this to the loss
                 loss = loss - self.alpha[0] * p_val
+
+                # adapt alpha
+                # first estimate the entropy
+                if 90 < self.step % 100 < 100: # for last 10  in every 100
+                    with th.no_grad():
+                        latents_rounded = th.round(latent * 10**self.round_digits) / (10**self.round_digits)
+                        latents_entropy = [scipy_entropy(np.unique(latent_i, return_counts=True)[1]) for latent_i in latents_rounded.numpy().T]
+                        entropy_mean = np.mean(latents_entropy)
+                        self.last_entropies.append(entropy_mean)
+
+                # update according to higher/lower than inital
+                if self.step % 100 == 0 and self.step != 0 and self.step > self.burnin:
+                    with th.no_grad():
+                        last_alpha = self.alpha[0]
+                        total_entropy_mean = np.mean(self.last_entropies)
+                        if total_entropy_mean > self.target_mean_entropy:
+                            self.alpha *= 10 * np.exp(- epoch/10000)
+                        else:
+                            self.alpha /= 10 * np.exp(- epoch/10000)
+                        self.last_entropies = [] # reset last entropies
+                        print(f"Entropy was estimated as {total_entropy_mean} which was {'higher' if total_entropy_mean > self.target_mean_entropy else 'lower'} than the target entropy of {self.target_mean_entropy}")
+                        print(f"Therefore setting alpha from {last_alpha} to {self.alpha}")
                 # --------------------------------------------------------------------------------
 
                 # Optimization step
@@ -279,6 +311,7 @@ class PPO(OnPolicyAlgorithm):
                 approx_kl_divs.append(th.mean(rollout_data.old_log_prob - log_prob).detach().cpu().numpy())
                 # --------------------------------------------------------------------------------
                 self.optimizer_var.step()
+                self.step += 1
                 # --------------------------------------------------------------------------------
 
             all_kl_divs.append(np.mean(approx_kl_divs))

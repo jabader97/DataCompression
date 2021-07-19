@@ -255,6 +255,7 @@ class PPO(OnPolicyAlgorithm):
                 # ADD TO THE LOSS
                 # learn the variance
                 loss_compression = -0.5 * th.sum(1 + latent_log_var - latent.pow(2) - latent.exp())
+                print("Loss compression", loss_compression)
                 # add this to the loss
                 loss = loss + self.alpha[0] * loss_compression
                 # --------------------------------------------------------------------------------

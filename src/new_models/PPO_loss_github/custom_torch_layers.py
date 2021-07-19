@@ -59,7 +59,7 @@ class NatureCNN(BaseFeaturesExtractor):
     """
 
     def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 512):
-        print("using custom NatureCNN with added variance estimation")
+        print("Using custom NatureCNN feature extractor with added variance estimation")
         super(NatureCNN, self).__init__(observation_space, features_dim)
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
@@ -89,9 +89,8 @@ class NatureCNN(BaseFeaturesExtractor):
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
         self.linear_log_variance = nn.Linear(n_flatten, features_dim)
 
-    def forward(self, observations: th.Tensor) -> th.Tensor:
+    def forward(self, observations: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         second_last_layer = self.cnn(observations)
-        print("returning two values")
         return self.linear(second_last_layer), self.linear_log_variance(second_last_layer)
 
 
