@@ -81,6 +81,49 @@ class Decoder:
 
         return epoch_losses
 
+    def train_with_rl(buffer, encoder, epochs=1000, batch_size=56):
+        print(f"Training decoder for {epochs} epochs")
+        time.sleep(1)  # to avoid printstream clashing with progressbar
+        # input as numpy arrays, change to tensors
+        # orig_images = torch.from_numpy(orig_images).float()
+        # lat_images = torch.from_numpy(lat_images).float()
+
+        # train
+        epoch_losses = []
+        for epoch in tqdm(range(epochs)):
+            _, lat_images = buffer.sample(batch_size)  # TODO: replace by minibatch sampling
+            total_loss = 0
+            # for (orig, latent) in zip(orig_images, lat_images):
+
+            # reset the gradients to zero
+            self.optimizer.zero_grad()
+
+            # compute reconstructions
+            lat_images = torch.unsqueeze(torch.unsqueeze(lat_images, 1), -1)
+            outputs = self.model(lat_images)
+
+            lat_reconstructed = encoder(outputs)
+
+            # compute reconstruction loss
+            lat_images = torch.squeeze(torch.squeeze(lat_images, 1), -1)
+            loss = self.criterion(lat_images, lat_reconstructed)
+
+            # compute gradients
+            loss.backward()
+
+            # perform parameter update
+            self.optimizer.step()
+
+            # add this images's loss to epoch losses (loss per image normalized)
+            epoch_losses.append(loss.item() / batch_size)
+
+            # display the epoch training loss
+            if epoch % 100 == 0:
+                print("\n epoch : {}/{}, loss = {:.6f}".format(epoch + 1, epochs, epoch_losses[-1]))
+                time.sleep(1)  # to avoid printstream clashing with progressbar
+
+        return epoch_losses
+
     def save(self, filepath):
         if filepath[-1] != "/":
             filepath += "/"
