@@ -8,7 +8,7 @@ import torch
 import numpy as np
 from DataCompression.msc.encoder import Encoder
 # from stable_baselines3 import PPO
-from DataCompression.src.PPO_Noise.ppo import PPO
+from DataCompression.src.new_models.PPO_loss_github.ppo import PPO
 from tqdm import tqdm
 from DataCompression.src.buffer import Decoder_Buffer
 from DataCompression.src.metric import evaluate
@@ -72,8 +72,8 @@ class Trainer(BaseModel):
         """
         policy_kwargs = dict(
             features_extractor_class=self.encoder_class,
-            features_extractor_kwargs=dict(features_dim=self.latent_dim),
-            error_thresh=self.added_error)  # defines output feature size
+            features_extractor_kwargs=dict(features_dim=self.latent_dim))  # ,
+            # error_thresh=self.added_error)  # defines output feature size
         if not self.use_custom_encoder:
             from stable_baselines3.common.torch_layers import NatureCNN
             policy_kwargs["features_extractor_class"] = NatureCNN
@@ -139,7 +139,7 @@ class Trainer(BaseModel):
             action = get_action(observation)
             observation, reward, done, info = self._env.step(action)
             observation = torch.from_numpy(observation).float()
-            latent = self._encoder_network(observation).detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
+            latent = self._encoder_network(observation)[0].detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
             self._buffer.add(observation, latent)
             if done:
                 observation = self._env.reset()

@@ -23,9 +23,9 @@ def evaluate(encoder, decoder, buffer, flattened=True, n_digits = 0):
         test_images_encoder = torch.reshape(test_images, (test_images.shape[0], 3, 210, 160))
     else:
         test_images_encoder = test_images
-    
+
     # forward pass of images
-    latents = encoder(test_images_encoder)
+    latents = encoder(test_images_encoder)[0]
     
     # rounding
     latents = torch.round(latents * 10**n_digits) / (10**n_digits)
@@ -50,7 +50,7 @@ def evaluate(encoder, decoder, buffer, flattened=True, n_digits = 0):
         reconstructed_encoder = torch.reshape(reconstructed, (reconstructed.shape[0], 3, 210, 160))
     else:
         reconstructed_encoder = test_images
-    new_latents = encoder(reconstructed_encoder)
+    new_latents = encoder(reconstructed_encoder)[0]
     agent_loss = mse_loss(new_latents, latents)
     print(f"The L2-loss in agent space is: {agent_loss}")
 
