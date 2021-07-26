@@ -5,7 +5,7 @@ import numpy as np
 import torch as th
 from gym import spaces
 from torch.nn import functional as F
-from scipy import entropy as scipy_entropy
+from scipy.stats import entropy as scipy_entropy
 
 from stable_baselines3.common import logger
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
@@ -95,9 +95,9 @@ class PPO(OnPolicyAlgorithm):
         _init_setup_model: bool = True,
         # --------------------------------------------------------------------------------
         alpha: float = 1e-10,
-        target_mean_entropy = 1,
+        target_mean_entropy = 0.2,
         round_digits = 3,
-        burnin = 0
+        burnin = 2000
         # --------------------------------------------------------------------------------
     ):
 
@@ -161,6 +161,7 @@ class PPO(OnPolicyAlgorithm):
         self.round_digits = round_digits # digits to round for entropy calculation
         self.burnin = burnin # how long to wait before adapt alpha
         # --------------------------------------------------------------------------------
+        print("ADAPTIVE ALPHA GITHUB")
 
         if _init_setup_model:
             self._setup_model()
@@ -264,6 +265,8 @@ class PPO(OnPolicyAlgorithm):
                 # ADD TO THE LOSS
                 # learn the variance
                 loss_compression = -0.5 * th.sum(1 + latent_log_var - latent.pow(2) - latent.exp())
+                if self.step % 100 == 0:
+                    print("Loss compression", self.alpha[0] * loss_compression.item(), "Agent loss", loss.item())
                 # add this to the loss
                 loss = loss + self.alpha[0] * loss_compression
                 # --------------------------------------------------------------------------------
@@ -281,21 +284,21 @@ class PPO(OnPolicyAlgorithm):
                 # self.optimizer_var.step()
                 # adapt alpha
                 # first estimate the entropy
-                if 90 < self.step % 100 < 100: # for last 10  in every 100
+                if 450 < (self.step % 500) < 500: # for last 10  in every 100
                     with th.no_grad():
                         latents_rounded = th.round(latent * 10**self.round_digits) / (10**self.round_digits)
                         latents_entropy = [scipy_entropy(np.unique(latent_i, return_counts=True)[1]) for latent_i in latents_rounded.numpy().T]
                         entropy_mean = np.mean(latents_entropy)
                         self.last_entropies.append(entropy_mean)                
                 # update according to higher/lower than inital
-                if self.step % 100 == 0 and self.step != 0 and self.step > self.burnin:
+                if self.step % 500 == 0 and self.step != 0 and self.step > self.burnin:
                     with th.no_grad():
                         last_alpha = self.alpha[0]
                         total_entropy_mean = np.mean(self.last_entropies)
                         if total_entropy_mean > self.target_mean_entropy:
-                            self.alpha *= 10 * np.exp(- epoch/10000)
+                            self.alpha = (self.alpha[0] * 10 * np.exp(- epoch/10000), None)
                         else:
-                            self.alpha /= 10 * np.exp(- epoch/10000)
+                            self.alpha = (self.alpha[0] /(10 * np.exp(- epoch/10000)), None)
                         self.last_entropies = [] # reset last entropies
                         print(f"Entropy was estimated as {total_entropy_mean} which was {'higher' if total_entropy_mean > self.target_mean_entropy else 'lower'} than the target entropy of {self.target_mean_entropy}")
                         print(f"Therefore setting alpha from {last_alpha} to {self.alpha}")  
