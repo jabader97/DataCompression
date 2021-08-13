@@ -102,7 +102,7 @@ class Trainer(BaseModel):
         if save_every:
             for i in range(0, epochs, save_every):
                 self._rl_agent.learn(save_every)
-                self._rl_agent.save(self.save_path + "rl_agent")
+                self._rl_agent.save(self.save_path + f"rl_agent_epoch{i}")
                 print("\n Saved RL agent")
         else:
             self._rl_agent.learn(epochs)
@@ -135,14 +135,22 @@ class Trainer(BaseModel):
         observation = self._env.reset()
         r = tqdm(range(samples)) if use_tqdm else range(samples)
         get_action = self.random_env_action if randomly else self._rl_agent.predict
+
+        env_step = 0
         for i in r:
-            action = get_action(observation)
-            observation, reward, done, info = self._env.step(action)
-            observation = torch.from_numpy(observation).float()
-            latent = self._encoder_network(observation)[0].detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
-            self._buffer.add(observation, latent)
-            if done:
-                observation = self._env.reset()
+            while True:
+                action = get_action(observation)
+                observation, reward, done, info = self._env.step(action)
+                observation = torch.from_numpy(observation).float()
+                latent = self._encoder_network(observation)[0].detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
+
+                if env_step >= 500 and env_step % 50 == 0: # min 500 steps in then every 50th
+                    self._buffer.add(observation, latent)
+                    break
+                if done:
+                    observation = self._env.reset()
+                    env_step = 0
+                    continue
 
         self._env.close()
 
@@ -164,7 +172,7 @@ class Trainer(BaseModel):
         if not filepath:
             filepath = self.save_path
         if not os.path.exists(filepath):
-            os.mkdir(filepath)
+            os.makedirs(filepath)
 
         if filepath[-1] != "/":
             filepath += "/"
@@ -173,8 +181,8 @@ class Trainer(BaseModel):
         self._Decoder.save(filepath)
         if buffer:
             self._buffer.save(filepath)
-        with open(filepath + "config.txt", "w") as f: # this just writes all variables whose types are known to pydantic
-            json.dump(self.dict(), f, indent=4)
+        # with open(filepath + "config.txt", "w") as f: # this just writes all variables whose types are known to pydantic
+        #     json.dump(self.dict(), f, indent=4)
 
     def load(self, filepath=None, buffer=False):
         """Loads the rl_agent and the Decoder from the given directory.
