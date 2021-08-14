@@ -123,7 +123,7 @@ class Trainer(BaseModel):
         self.fill_buffer(self.buffer_size) # fill buffer
         self.train_Decoder(self.decoder_train_steps, batch_size=self.decoder_batch_size) # train decoder
 
-    def fill_buffer(self, samples=100, randomly=True, use_tqdm=True):
+    def fill_buffer(self, samples=100, randomly=True, use_tqdm=True, debug=False):
         """Fills the buffer randomly
 
         Args:
@@ -143,12 +143,18 @@ class Trainer(BaseModel):
                 observation, reward, done, info = self._env.step(action)
                 observation = torch.from_numpy(observation).float()
                 latent = self._encoder_network(observation)[0].detach() # make sure to detach the latents to not propagate back through rl agent in decoder training
-
-                if env_step >= 500 and env_step % 50 == 0: # min 500 steps in then every 50th
+                
+                env_step += 1
+                r = torch.rand(1)
+                if (env_step >= 500 and env_step % 50 == 0) or r < 0.003: # min 500 steps in then every 50th, otherwise just randomly in the meantime
                     self._buffer.add(observation, latent)
+                    if debug:
+                        print(f"Adding obs from step {env_step}")
                     break
                 if done:
                     observation = self._env.reset()
+                    if debug:
+                        print(f"Restarting env at step {env_step}")
                     env_step = 0
                     continue
 
