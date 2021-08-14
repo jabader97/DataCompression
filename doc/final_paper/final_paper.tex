@@ -1,0 +1,49 @@
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{url}            % simple URL typesetting
+\usepackage{graphics}
+\usepackage{color}
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}       % blackboard math symbols
+\usepackage{amssymb}
+\usepackage{enumerate, multirow, color, graphicx, lastpage, listings, tikz, pdflscape, subfigure, float, polynom, tabularx, forloop, geometry, listings, fancybox, tikz, forest, tabstackengine, cancel}
+
+\graphicspath{{../graphics/}}
+\usepackage{geometry}
+\geometry{left=2.8cm,right=2.8cm,top=2.6cm,bottom=2.6cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage{hyperref}% should be the last package you include
+
+\newcommand{\theteam}{}
+\newcommand{\team}[1]{\def\theteam{#1}}
+
+
+\fancyhead[L]{\rightmark} % I changed this from : \fancyhead[L]{\theteam} (think it is just less ugly like that)
+\fancyhead[R]{\thepage}
+\cfoot{}
+
+\setlength{\parindent}{0pt}
+
+\team{Jessica Bader, 5624582; Philipp Noel von Bachmann, 4116220 }
+\title{Extremely Lossy Compression through Reinforcement Learning}
+\author{\theteam}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\begin{document}
+\maketitle
+
+\input{tex/01_Introduction.tex}
+\input{tex/02_RelatedWorks.tex}
+\input{tex/03_Methods.tex}
+\input{tex/04_Evaluation.tex}
+\input{tex/05_Discussion.tex}
+
+\bibliographystyle{abbrv}
+\bibliography{tex/06_Literature.bib}
+
+\end{document}
