@@ -1,1 +1,96 @@
 \section{Methods}
+
+\subsection{Architecture}\label{methods:Architecture}
+    In Deep-Learning based compression, encoding comprises of the data first
+    beeing transformed by a neural network into a latent space. Then this latent
+    space is losslessly encoded and transmitted. On the decoding side, the
+    latent space is decompressed and passed through another neural network back
+    to the input domain.
+
+    In our approach, a Reinforcement Learning agent takes the place of the first
+    neural network. The agent contains a so-called feature extractor, which
+    extracts features from the observation that are important for determining
+    the action. As described in ??, this information should also be important
+    for reconstruction. Then the latent space is losslessly encoded and
+    transmitted with an algorithm of choice (for example ..., for training this
+    step is not strictly necessary as the latents get losslessly decompressed in
+    the next step). After decoding the latents they are passed through the
+    second network which in this case is a normal upsampling CNN (TODO: which name??). 
+
+\subsection{Measuring performance and objective function}
+    In traditional lossless image compression, the objective is to minimize the
+    bitrate while still achieving a perfect reconstruction of the input data. Lossy
+    compression on the other hand allows for errors, which leads to a tradeoff
+    between performance and bitrate. If the bitrate should be lower, one has to
+    discard more information, leading to a worse reconstruction. Therefore the
+    objective becomes to either to minimize the bitrate for a given reconstruction
+    performance or maximize the reconstruction performance for a given bitrate.
+
+    To determine the bitrate of an algorithm, one has to look at the encoding
+    process of the data, see \ref{methods:Architecture}. The process should
+    decrease the bitrate compared to the original input image, if the entropy of
+    the latent space is lower than the input space, and a sufficiently fitting
+    encoding distribution is chosen.
+
+    If the encoding distribution is given by $Q(Z=z, \theta)$ where $\theta$
+    parametrizes the distribution, then $\mathbb{E}_{z \sim Q(Z=z,
+    theta)}[log(P(z))]$ gives the bitrate. As neural networks have real valued
+    outputs so $Q(Z=z, \theta)$ is a continuous pdf, the bitrate is clearly very
+    high. Therefore one approach is to round the latent values. This reduces $Q$
+    again to a discrete probability distribution, which is however undesirable
+    for training, therefore we approximate $Q$ by adding uniform noise:
+    
+    In turn, this means that the encoding network shouldn't encode information
+    in small differences. One approach to achieve this behaviours is to add
+    noise to the latent values, which forces the RL-agent to get more robust to
+    noise.
+
+    The encoding distribution is naively chosen to be a normal distibution. The
+    mean can be chosen arbitrary, so is set to 0 for simplicity. [TODO: this
+    part is just disregared in balle]
+
+    for decompression just talk a bit about mse and the other ssimmse.
+
+    
+    
+
+
+\subsection{Objective function from view of variational inference}
+    In Lossy image compression, the objective function is given by the ELBO:
+    \begin{align}
+        & \mathbb{E}_{z \sim Q(Z= z)}[log P(X, Z= z) - log Q(Z = z)]\\
+        & = \mathbb{E}_{z \sim Q(Z= z)}[log P(X \vert Z= z) - log \frac{Q(Z = z)}{P(Z = z)}]\\
+        & = \mathbb{E}_{z \sim Q(Z= z)}[log P(X \vert Z= z)] - D_{KL}[Q(Z = z)\Vert P(Z = z)]\\
+    \end{align}
+    
+    Problem is, that we cannot differenciate by q since expectation is over q,
+    so just fix q by uniform distribution, and do reparametrization trick
+
+    now entropy of q becomes fixed so we can remove from optimization, just need
+    to care about $E_U[P(Z + U)]$
+
+    just need to choose encoding distribution, choose naively as normal with
+    mean 0 and learned variance since needs to be flexible.
+
+    for likelihood, choose normal (leads to MSE) and fix variance
+
+\subsection{Training}
+    first show how agent is trained with all loss functions
+    then show how decoder is trained with loss function
+    show how it is evaluated??
+
+
+
+
+
+
+
+
+
+
+
+
+structure:
+1. describe general architecture
+2. describe goals and objective functions during training
+3. training process
