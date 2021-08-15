@@ -3,7 +3,6 @@ test
 test.py
 .ipynb_checkpoints
 
-
 ##------------------ latex ----------------------
 
 ## Core latex/pdflatex auxiliary files:
@@ -19,6 +18,8 @@ test.py
 *.cb
 *.cb2
 .*.lb
+*.bbl
+*.blg
 
 ## Build tool auxiliary files:
 *.fdb_latexmk
@@ -28,7 +29,5 @@ test.py
 *.synctex.gz(busy)
 *.pdfsync
 
-## exclude also pdf
-*.pdf
 
 ROMS

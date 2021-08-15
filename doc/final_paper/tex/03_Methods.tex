@@ -7,6 +7,11 @@
     latent space is decompressed and passed through another neural network back
     to the input domain.
 
+    \begin{figure}
+        \includegraphics[width=\linewidth]{img/architecture.pdf}
+        \caption{Overall architecture. First, the input image gets transformed by the feature extractor to the latent space. This latent space is used for the action of the agent as well as transmitted. The decoder then tries to reconstruct the input image from the latents.}
+    \end{figure}
+
     In our approach, a Reinforcement Learning agent takes the place of the first
     neural network. The agent contains a so-called feature extractor, which
     extracts features from the observation that are important for determining
