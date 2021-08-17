@@ -128,6 +128,9 @@
     encoding to the latents is fixed. Now the decoder to the reconstruction
     needs to be trained. For the decoder, we use the loss given in TODO: add ref. 
 
+\subsection{Decoder loss}
+For our decoder, we tried several loss functions. The simplest version was the MSE between the original and reconstructed images. \\
+In early experimentation (see section 4.1), we found that some details which may be considered important to the task, specifically the location of the ball, were omitted as they accumulated little MSE penalty; in an attempt to recover these aspects, we devised a second loss scheme, which we refer to as latent loss. The motivation was to reward the decoder for reconstructing the image in such a way that the same features would be extracted, resulting in preserving the most important aspects. For this loss, we passed the reconstructed image through the feature extractor and evaluated the MSE between the original latent space and the reconstructed latent space.
 
 
 
