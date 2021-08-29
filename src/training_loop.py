@@ -8,7 +8,7 @@ import torch
 import numpy as np
 from DataCompression.msc.encoder import Encoder
 # from stable_baselines3 import PPO
-from DataCompression.src.new_models.PPO_loss_github.ppo import PPO
+from DataCompression.src.PPO_Noise.ppo import PPO
 from tqdm import tqdm
 from DataCompression.src.buffer import Decoder_Buffer
 from DataCompression.src.metric import evaluate
@@ -102,7 +102,7 @@ class Trainer(BaseModel):
         if save_every:
             for i in range(0, epochs, save_every):
                 self._rl_agent.learn(save_every)
-                self._rl_agent.save(self.save_path + f"rl_agent_epoch{i}")
+                self._rl_agent.save(self.save_path + f"rl_agent")  #_epoch{i}")
                 print("\n Saved RL agent")
         else:
             self._rl_agent.learn(epochs)
@@ -146,7 +146,7 @@ class Trainer(BaseModel):
                 
                 env_step += 1
                 r = torch.rand(1)
-                if (env_step >= 500 and env_step % 50 == 0) or r < 0.003: # min 500 steps in then every 50th, otherwise just randomly in the meantime
+                if (env_step >= 100 and env_step % 50 == 0) or r < 0.003:  # min 500 steps in then every 50th, otherwise just randomly in the meantime
                     self._buffer.add(observation, latent)
                     if debug:
                         print(f"Adding obs from step {env_step}")
