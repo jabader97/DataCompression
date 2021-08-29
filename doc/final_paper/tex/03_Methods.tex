@@ -9,7 +9,7 @@
 
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.8\linewidth]{img/architecture.pdf}
+        \includegraphics[width=0.8\linewidth]{images/architecture.pdf}
         \caption{Overall architecture. First, the input image gets transformed by the feature extractor to the latent space. The latent values get rounded/noise gets added. Then the values get losslessly transmitted. Finally the decoder tries to reconstruct the input image from the latents.}
         \label{fig:Architecture}
     \end{figure}
@@ -22,7 +22,7 @@
     transmitted with an algorithm of choice (for example ..., for training this
     step is not strictly necessary as the latents get losslessly decompressed in
     the next step). After decoding the latents they are passed through the
-    second network which in this case is a normal upsampling CNN (TODO: which name??). 
+    second network which in this case is a normal upsampling CNN (TODO: which name??).
     Figure \ref{fig:Architecture} shows an overview of the architecture.
 
 \subsection{Theory}
@@ -45,7 +45,7 @@
     In addition, the entropy of $Q_\theta(Z=z \vert x)$ gives the case when
     $Q=P$ and we would have the perfect encoding distribution. Therefore the
     entropy gives a lower bound on the cross-entropy.
-    
+
     As neural networks have real valued outputs which means that $Q_\theta(Z=z
     \vert x)$ is a continuous pdf, the bitrate is very high. Therefore one
     approach is to round the latent values. This reduces $Q$ to a discrete
@@ -55,7 +55,7 @@
     rounding during training by the addition of uniform noise $u$, see also
     figure \ref{fig:Architecture}. The noise addition shifts the values
     similarly to rounding, but is differentiable.
-    
+
     Another effect of adding uniform noise is that we can reparametrize
     \ref{eq:BitRate} and take the expectation over the uniform noise:
     \begin{equation}
@@ -68,7 +68,7 @@
     % approximate the continuous pdf by adding uniform noise to the new discrete
     % pdf. Therefore we can also just add noise instead of round?)
 
-    
+
     % In turn, this means that the encoding network shouldn't encode information
     % in small differences. One approach to achieve this behaviours is to add
     % noise to the latent values, which forces the RL-agent to get more robust to
@@ -101,10 +101,10 @@
     images through the feature extractor and measuring the L2 distance in latent
     space.
 
-    
 
-    
-    
+
+
+
 
 
 % \subsection{Objective function from view of variational inference}
@@ -114,7 +114,7 @@
 %         & = \mathbb{E}_{z \sim Q(Z= z)}[log P(X \vert Z= z) - log \frac{Q(Z = z)}{P(Z = z)}]\\
 %         & = \mathbb{E}_{z \sim Q(Z= z)}[log P(X \vert Z= z)] - D_{KL}[Q(Z = z)\Vert P(Z = z)]\\
 %     \end{align}
-    
+
 %     Problem is, that we cannot differenciate by q since expectation is over q,
 %     so just fix q by uniform distribution, and do reparametrization trick
 
@@ -132,8 +132,8 @@
     is responsible for the bitrate. Therefore we add the loss from
     \ref{eq:BitRate} to the standard loss:
     \begin{equation}
-        \mathbb{E}_{x}[Loss_{RL}(x) + \mathbb{E}_{u \sim U[-\epsilon, \epsilon]}[log(P(Z=\hat{z} + u))]]
-    \end{equation}
+        \mathbb{E}_{x}[Loss_{RL}(x) + \alpha\cdot \mathbb{E}_{u \sim U[-\epsilon, \epsilon]}[log(P(Z=\hat{z} + u))]]
+    \end{equation} where $\alpha \in \mathbb{R}$ is chosen to balance the two terms.
     Both expectations will be approximated by empirical means over the training
     data. As the RL-agent is independent of the decoder, we can also train it
     separatly first.
@@ -154,3 +154,10 @@
     preserving the most important aspects. For this loss, we passed the
     reconstructed image through the feature extractor and evaluated the MSE
     between the original latent space and the reconstructed latent space.
+
+\subsection{Adaptive alpha (omitted)}
+During training, an issue arose in choosing $\alpha$ caused by the RL reward: the agent behaves randomly in early iterations and earns little reward, but this improves drastically once it has started learning. Therefore, choosing $\alpha$ too large prevents the agent from ever learning to complete the task, while choosing $\alpha$ too small allows the agent to ignore the cross entropy loss while fine-tuning its actions. We tried to resolve this with a non-static $\alpha$: as the reward grows, the relative importance of the two terms should stay approximately the same. We designed several adaptation schemes (others can be found in Future Work), but the general algorithm we chose was to update $\alpha$ each time the ratio threshold was violated. We implemented this by
+\begin{equation}
+    \alpha = \alpha \cdot 10 \cdot e^{-i / 1000}
+\end{equation}
+where $i$ is the number of iterations. Multiplying by the negative iterations ensures that $\alpha$ changes most drastically at the beginning, but will converge over time.
