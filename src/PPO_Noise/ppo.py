@@ -261,9 +261,9 @@ class PPO(OnPolicyAlgorithm):
 
                 p = th.distributions.Normal(th.zeros(self.policy.features_dim), p_var)
                 p_val = th.mean(p.log_prob(latent))
-                if epoch % 1000 == 0 and self.verbose:
-                    with th.no_grad():
-                        print("P value", th.exp(p_val).item(), "p_val", self.alpha[0] * p_val.item(), "agent loss", loss.item(), "Learned variance", th.mean(p_var).item())
+                # if epoch % 1000 == 0 and self.verbose:
+                #     with th.no_grad():
+                #         print("P value", th.exp(p_val).item(), "p_val", self.alpha[0] * p_val.item(), "agent loss", loss.item(), "Learned variance", th.mean(p_var).item())
                 # add this to the loss
                 loss = loss - self.alpha[0] * p_val
                 # --------------------------------------------------------------------------------
