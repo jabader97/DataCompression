@@ -15,3 +15,5 @@ We also utilized our latent loss scheme by pre-training on image reconstruction 
     \caption{Baseline method (no compression) with decoder trained on MSE for 10,000 iterations, then latent MSE for 10,000 iterations}
     \label{fig:baseline_MSE_latent}
 \end{figure}
+\subsection{Adaptive Alpha}
+When we implemented our custom loss function with static $\alpha$, several rudimentary tests were done to verify that the model behaved as expected. One such test involved varying $\alpha$: we expected that a lower value would prioritize task performance, while a higher value would prefer a lower bitrate. However, we found this was not the case: there seemed to be just as much variation between independent tests of the same $\alpha$ as changing $\alpha$ (add results in appendix?). Given our hypothesis for where the problem lay (see Methods), we developed the adaptive $\alpha$ scheme. However, initial results showed no improvement and we were forced to move this to Future Work.
