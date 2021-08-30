@@ -5,7 +5,7 @@ Our first set of experiments featured the basic dimension reduction method,
 without the modifications for compression. We were looking to verify that the
 required reconstruction information was present within the lower dimensional
 representation created by the feature extractor. (TODO include bitrate) The
-qualitative results can be seen in Figure 1. \\
+qualitative results can be seen in Figure \ref{fig:baseline_MSE}. \\
 
 We also utilized our latent loss scheme by pre-training on image reconstruction
 before training on the latent loss. The results can be seen in Figure 2.
@@ -15,12 +15,7 @@ before training on the latent loss. The results can be seen in Figure 2.
     \caption{Baseline method (no compression) with decoder trained on MSE for 10,000 iterations}
     \label{fig:baseline_MSE}
 \end{figure}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/orig_reconstructed_rl3.0.png}
-    \caption{Baseline method (no compression) with decoder trained on MSE for 10,000 iterations, then latent MSE for 10,000 iterations}
-    \label{fig:baseline_MSE_latent}
-\end{figure}
+
 
 \subsection{Compression}
 Now we added the compression loss to the training of the RL agent
@@ -34,7 +29,7 @@ An alpha of $1e-8$ TODO: verify seemed to work best for the Decoder, therefore
 we chose this value for an extended run over ... TODO: add epochs. Tested on an
 independently created test dataset, this resulted in an entropy of 1.7 bits per
 latent dimension, if the latent values get rounded to 3 digits. The actual
-bitrate given as the cross-entropy \ref{eq:BitRate} is higher however, since
+bitrate given by the cross-entropy \ref{eq:BitRate} is higher however, since
 we need to choose a fixed distribution for encoding and transmission of the
 latents. As for training we chose a normal distribution with mean 0 and learned
 variance, we also use this for testing. The expected variance per dimension was
@@ -57,6 +52,19 @@ compression some of the data got lost, since the image is distorted.
     \label{fig:final_agent}
 \end{figure}
 
+\subsection{Latent Loss Scheme}
+As discussed in section \ref{sec:Introduction}, L2 Loss might be suboptimal and
+we introduced a latent loss scheme \ref{sub:Decoder_Loss} as an alternative.
+Training a decoder with the latent loss scheme showed an decrease in image
+quality compared to L2 Loss scheme, see figure \ref{fig:baseline_MSE_latent}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/orig_reconstructed_rl3.0.png}
+    \caption{Baseline method (no compression) with decoder trained on MSE for 10,000 iterations, then latent MSE for 10,000 iterations}
+    \label{fig:baseline_MSE_latent}
+\end{figure}
+
 \subsection{Adaptive Alpha}
 When we implemented our custom loss function with static $\alpha$, several
 rudimentary tests were done to verify that the model behaved as expected. One
@@ -69,25 +77,13 @@ Methods), we developed the adaptive $\alpha$ scheme. However, initial results
 showed no improvement and we were forced to move this to Future Work.
 
 \subsection{Pretrained agents}
-Another idea was that maybe adding the compression loss to the RL agent from the
+Another idea was that adding the compression loss to the RL agent from the
 beginning on was a too large constrain for the agent to learn anything.
 Therefore, we tried to fix this by first pretraining the agent, and then adding
-the compression loss to the agent. On the one hand, the compression loss reduced
-the entropy but on the other hand, the decoder couldn't learn anymore, so this
-procedure showed no improvements.
+the compression loss to the agent. On the one hand, the additional compression
+loss reduced the entropy but on the other hand, the decoder didn't learn
+anymore after the training, so this procedure showed no improvements.
 
-
-
-
-% TODO:
-
-% structure eval:
-% - show compression performance, maybe the curve
-% - show that while entropy is low, cross entropy still high for final agent (overfit?)
-% - show some images during training, agent can learn paddle position, not only memorize images
-% - show that it breaks down for evaluation set
-
-% other experiments:
-% - github code: scaled noise together with variance
-% - write up pretrained agent that was trained on, but info just destroyed
+\subsection{Scaled noise}
+TODO: add or leave out
 
