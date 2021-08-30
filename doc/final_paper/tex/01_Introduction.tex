@@ -1,2 +1,16 @@
-\section{Introduction}
-Image compression exists in multiple forms. Lossless compression mandates original data be perfectly reconstructed, but is limited by data entropy. To compress further, information content must be sacrificed. Therefore, lossy compression minimizes the loss for a specific bitrate. But which content should be discarded? Early image compression loss-functions, like $L_2$-loss, give each pixel equal value. However, some parts retain more valuable information than others. Research has hand-crafted improved metrics, like MS-SSIM ~\cite{1292216}, but defining these is task-specific. Ultimately, achieving the most extreme forms of compression requires task-dependent methods to quantify information value, preserving only the minimum required to complete the task. However, general methods for this process would be useful. This facilitates a natural transition into the reinforcement learning (RL) space, where agents act on an environment to maximize rewards. The goal of this research is to define a method through which data is compressed such that the agent can maximize the reward in the reconstructed environment.
+\section{Introduction}\label{sec:Introduction}
+Image compression exists in multiple forms. Lossless compression mandates
+original data be perfectly reconstructed, but is limited by data entropy. To
+compress further, information content must be sacrificed. Therefore, lossy
+compression minimizes the loss for a specific bitrate. But which content should
+be discarded? Early image compression loss-functions, like $L_2$-loss, give each
+pixel equal value. However, some parts retain more valuable information than
+others. Research has hand-crafted improved metrics, like MS-SSIM
+~\cite{1292216}, but defining these is task-specific. Ultimately, achieving the
+most extreme forms of compression requires task-dependent methods to quantify
+information value, preserving only the minimum required to complete the task.
+However, general methods for this process would be useful. This facilitates a
+natural transition into the reinforcement learning (RL) space, where agents act
+on an environment to maximize rewards. The goal of this research is to define a
+method through which data is compressed such that the agent can maximize the
+reward in the reconstructed environment.

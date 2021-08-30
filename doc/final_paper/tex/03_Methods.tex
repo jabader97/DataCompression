@@ -131,7 +131,7 @@
     abstracted by $Loss_{RL}$. As the RL-agent takes the role of the encoder, it
     is responsible for the bitrate. Therefore we add the loss from
     \ref{eq:BitRate} to the standard loss:
-    \begin{equation}
+    \begin{equation}\label{eq:RL_Training_Loss}
         \mathbb{E}_{x}[Loss_{RL}(x) + \alpha\cdot \mathbb{E}_{u \sim U[-\epsilon, \epsilon]}[log(P(Z=\hat{z} + u))]]
     \end{equation} where $\alpha \in \mathbb{R}$ is chosen to balance the two terms.
     Both expectations will be approximated by empirical means over the training
