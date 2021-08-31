@@ -8,7 +8,7 @@ Policy Optimization (PPO) \cite{raffin2019stable}. PPO is an on-policy
 algorithm, that uses an actor critic approach. We started with the stablebaselines3 implementation \cite{raffin2019stable}, and
 modified it to our needs.
 
-\subsection{Dimension reduction}
+\subsection{Dimension reduction}\label{sub:Dimension_reduction}
 Our first experiments featured the basic dimension reduction method,
 without the modifications for compression. The goal was to verify the
 required reconstruction information was present within the feature extractor's lower dimensional
@@ -28,7 +28,7 @@ from training set). \\
 Now we added the compression loss to the RL agent training, equation
 \ref{eq:RL_Training_Loss} and trained the agent with this loss function. We
 modified the $\alpha$ value, looking at the performance of the decoder after some epochs. An $\alpha$
-of $1e-4$ worked best, therefore we chose this value for an extended run over $1e5$ add epochs. Tested on an independently created test
+of $1e-4$ worked best, therefore we chose this value for an extended run over $1e5$ epochs. Tested on an independently created test
 dataset, this resulted in an entropy of 1.7 bits per latent dimension, when the
 latent values were rounded to 3 digits. The actual bitrate given by the
 cross-entropy \ref{eq:BitRate} is higher however, as we must choose a
