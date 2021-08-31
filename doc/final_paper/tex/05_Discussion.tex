@@ -64,23 +64,22 @@ accuracy and bitrate should increase inversely with $\alpha$, or a theoretical
 foundation should found why they do not. This could be possible through other
 adaptive schemes (thresholds, static ratios, adaptive ratios, etc.). This may
 also require reflection to analyze if this divergence from expected behavior is
-driven by mechanisms other than RL loss. \\
+driven by mechanisms other than RL loss.
 
 \subsection{Bitrate}
-As ultimatly,the performance together with the decoder counts we chose a small
-alpha for the extended training of an agent. We saw that on a test set, the
-entropy of this agent is reasonably small and the image gets compressed. However
-if in practice we encode the latents by the normal distribution used during the
-training process, the bitrate would be much higher. This means that while
-the agents is able to compress the data, it is not able to fit it into a normal
-distribution. Therefore future work needs to either make the agent fit the data
-better or find a new method to chose/estimate the distribution that gets used
-for encoding the latents.\\
+On the test set, the entropy of the final agent \ref{sub:Results_Compression} is
+reasonably small and the image gets compressed. However if in practice we encode
+the latents by the normal distribution used during the training process, the
+bitrate would be much higher. This means that while the agents is able to
+compress the data, it is not able to fit it into a normal distribution.
+Therefore future work needs to either make the agent fit the data better or find
+a new method to chose/estimate the distribution that gets used for encoding the
+latents.
 
 \subsection{Decoder generalization}
-On the decoder side, we saw that the image quality decreases in
+On the decoder side, we saw that the image quality decreased in
 comparison to the baseline, especially on the test dataset. While a decrease can
-be expected due to compression, the Decoder failed to reconstruct important
+be expected due to compression, the decoder failed to reconstruct important
 properties like the paddle position, and just reproduced static properties like
 the game frame. While we cannot yet rule out insufficient training time (due to
 lack of resources), we believe this comes from lack of information in the
@@ -89,25 +88,26 @@ injective, so many different gamestates could have the same representation. A
 new architecture is required, for example: using an earlier layer of the feature
 extractor as the encoding; training the encoder and decoder together, to ensure
 the encoding retains the correct information; using a different encoder
-altogether.\\
+altogether.
 
 \subsection{Latent loss scheme}
-Changing the loss function to our latent loss scheme showed no improvement. The
-image seems to get noisy and information gets distorted. Even in the lower part
-of the image where normally the screen is black (except of the ball sometimes),
-the decoder introduces noise. One reason for this behaviour could be similar to
-adversarial attacks: The decoder figures out a way to trick the encoder to
-generate the desired latents, while using totally different input data. One
-improvement could be to combine the latent loss scheme with L2-Loss such that
-L2-Loss preserves the general image quality and penalizes distortion,
+Changing the loss function of the decoder to our latent loss scheme showed no
+improvement. The image seems to get noisy and information gets distorted. Even
+in the lower part of the image where normally the screen is black (except of the
+ball sometimes), the decoder introduces noise. One reason for this behaviour
+could be similar to adversarial attacks: The decoder figures out a way to trick
+the encoder to generate the desired latents, while using totally different input
+data. One improvement could be to combine the latent loss scheme with L2-Loss
+such that L2-Loss preserves the general image quality and penalizes distortion,
 and latent loss preserves semantic information.
 
 \subsection{Environment}
 Furthermore, we would like to explore other environments. Because this
 environment included a static start position and relatively slow image change,
 we found that many of the images looked similar (full or almost full block
-pattern) which lead to poor generalization. Using the agent long enough to train
-and collect diverse images proved infeasible under time/resource constraints.\\
+pattern) which lead to overfitting in memorization of the image and consqeuently
+poor generalization. Using the agent long enough to train and collect diverse
+images proved infeasible under time/resource constraints.
 
 \subsection{Train test separatation}
 In addition, a unique issue with train/test separation resulted from the
@@ -122,4 +122,4 @@ better solution would be to generate a large test set in advance and remove
 images if they appear during training. It can also be noted that full, final
 results should be reported on a test set rather than a training set (as done in
 the Dimension reduction section of experiments). These were done as rudimentary
-sanity checks, and were included due to lack of better results.\\
+sanity checks, and were included due to lack of better results.
