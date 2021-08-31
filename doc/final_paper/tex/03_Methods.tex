@@ -34,17 +34,17 @@
         \begin{equation}\label{eq:BitRate}
             \mathbb{E}_{z \sim Q_\theta(Z=z \vert x)}[log(P(Z=z))]
         \end{equation}
-        In addition, $Q=P$ will give the perfect encoding distribution. Hence, the
+        In addition, replacing $P$ by $Q$, achieves the perfect encoding distribution. Hence, the
         entropy is a lower bound on the cross-entropy.
 
         Because NNs have real valued outputs, ${Q_\theta(Z=z\vert x)}$
          is a continuous PDF, resulting in a high bit rate. Therefore, one
         approach is to round the latents \cite{DBLP:journals/corr/BalleLS16a}. This reduces $Q$ to a discrete
         probability distribution, which reduces the cross entropy. However, rounding
-        is undesirable during training, since its gradient is 0 nearly everywhere. Therefore, we replace
+        is undesirable during training, since its gradient is 0 almost everywhere. Therefore, we replace
         rounding during training with adding uniform noise $u$ (see also
         figure \ref{fig:Architecture}). This shifts the values
-        similarly to rounding, but is differentiable.
+        similarly to rounding, but behaves better.
 
         Another effect of adding uniform noise is that we can reparametrize equation
         \ref{eq:BitRate} and take the expectation over the uniform noise:
