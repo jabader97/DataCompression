@@ -23,15 +23,15 @@ driven by mechanisms other than RL loss.
 \subsection{Bitrate evaluation}
 On the test set, the entropy of the final agent \ref{sub:Results_Compression} is
 reasonably small and the image is compressed. However, if in testing we encode
-the latents Normally as during the training process, the
+the latents with a Normal distribution as during the training process, the
 bitrate would rise. This means that while the agents is able to
-compress the data, it is not able to fit it Normally.
+compress the data, it is not able to fit the distribution.
 Therefore future work needs to either fit the agent better to the data or find
 a new method to chose/estimate the latent encoding distribution.
 
 \subsection{Decoder generalization}
 On the decoder side, we saw that the image quality decreased in
-comparison to the baseline, especially on the test dataset. While a decrease can
+comparison to the baseline, especially on the test dataset. Although a decrease can
 be expected due to compression, the decoder failed to reconstruct important
 properties like the paddle position, and just reproduced static properties like
 the game frame. While we cannot yet rule out insufficient training time (due to
