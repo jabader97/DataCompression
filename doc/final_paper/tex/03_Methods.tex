@@ -1,60 +1,48 @@
 \section{Methods}
 
 \subsection{Architecture}\label{methods:Architecture}
-    In Deep-Learning based compression, encoding comprises of the data first
-    beeing transformed by a neural network into a latent space. Then this latent
-    space is losslessly encoded and transmitted. On the decoding side, the
-    latent space is decompressed and passed through another neural network back
-    to the input domain.
+    In Deep-Learning based compression, an encoder NN embeds data in a latent space, where it is losslessly encoded and transmitted. The decoder NN decompresses the latent space and returns to the input domain.
 
     \begin{figure}[H]
         \centering
         \includegraphics[width=0.8\linewidth]{images/architecture.pdf}
-        \caption{Overall architecture. First, the input image gets transformed by the feature extractor to the latent space. The latent values get rounded/noise gets added. Then the values get losslessly transmitted. Finally the decoder tries to reconstruct the input image from the latents.}
+        \caption{Overall architecture}
         \label{fig:Architecture}
     \end{figure}
 
-    In our approach, a Reinforcement Learning agent takes the place of the first
-    neural network. The agent contains a so-called feature extractor, which
-    extracts features from the observation that are important for determining
-    the action. Ideally this information should also be important
+    In our approach, a RL agent acts as the first
+    NN. The agent contains a feature extractor, which
+    extracts information to determine
+    the action. Ideally, this content should also be important
     for reconstruction. Then the latent space is losslessly encoded and
-    transmitted with an algorithm of choice, for example ANS (for training this
-    step is not strictly necessary as the latents get losslessly decompressed in
-    the next step). After decoding the latents they are passed through the
-    second network which in our case is a normal upsampling NN.
+    transmitted with an algorithm of choice, such as ANS (for training this
+    step is unnecessary as the latents will be losslessly decompressed). After decoding, the latents they are passed through a normal upsampling NN.
     Figure \ref{fig:Architecture} shows an overview of the architecture.
 
 \subsection{Theory}
-    Lossy compression trades between having a low bitrate and a low distortion.
-    This section describes the theory of these objectives applied to our
-    problem.\newline
+    Lossy compression balances a low bitrate and a low distortion.
+    This section describes how these objectives apply to our project.
 
     \subsubsection{Bitrate}
-        To determine the bitrate of an algorithm, one has to look at the encoding
-        process of the data, where the data gets mapped from the input image to the
-        latent space, see \ref{methods:Architecture}. The process decreases the
-        bitrate compared to the original input image, if the entropy of the latent
-        space is lower than the input space, and a sufficiently fitting encoding
-        distribution for transmission of the latent values is chosen. If the latent
+        Determining algorithm bitrate requires observing the encoding
+        process, where the input image is mapped to the
+        latent space, see \ref{methods:Architecture}. This decreases the
+        image bitrate if the latent entropy is lower than the image entropy and a sufficient encoding distribution for latent transmission is chosen. If the latent
         space distribution of $z$ is given by $Q_\theta(Z=z \vert x)$ where $\theta$
-        parametrizes the distribution and $P(Z=z)$ is used to encode the latents for
-        transmission, the bitrate is given by the cross entropy
+        parametrizes the distribution and $P(Z=z)$ is used to encode the latents for transmission, the bitrate is given by the cross entropy
         \begin{equation}\label{eq:BitRate}
             \mathbb{E}_{z \sim Q_\theta(Z=z \vert x)}[log(P(Z=z))]
         \end{equation}
-        In addition, the entropy of $Q_\theta(Z=z \vert x)$ gives the case when
-        $Q=P$ and we would have the perfect encoding distribution. Therefore the
-        entropy gives a lower bound on the cross-entropy.
+        In addition, $Q=P$ will give the perfect encoding distribution. Hence, the
+        entropy is a lower bound on the cross-entropy.
 
-        As neural networks have real valued outputs which means that $Q_\theta(Z=z
-        \vert x)$ is a continuous pdf, the bitrate is very high. Therefore one
-        approach is to round the latent values TODO add. This reduces $Q$ to a discrete
+        Because NNs have real valued outputs, $Q_\theta(Z=z
+        \vert x)$ is a continuous PDF, resulting in a high bit rate. Therefore, one
+        approach is to round the latents \cite{DBLP:journals/corr/BalleLS16a}. This reduces $Q$ to a discrete
         probability distribution, which reduces the cross entropy. However, rounding
-        is a undesirable operation during training, since the gradient of the
-        rounding operation is 0 nearly everywhere. Therefore, we replace the
-        rounding during training by the addition of uniform noise $u$, see also
-        figure \ref{fig:Architecture}. The noise addition shifts the values
+        is undesirable during training, since its gradient is 0 nearly everywhere. Therefore, we replace
+        rounding during training with adding uniform noise $u$, see also
+        figure \ref{fig:Architecture}. This shifts the values
         similarly to rounding, but is differentiable.
 
         Another effect of adding uniform noise is that we can reparametrize equation
@@ -76,26 +64,23 @@
         % noise.
 
         % [TODO: this part is just disregared in balle]
-        The encoding distribution $P$ is naively chosen to be a normal distibution. The
-        mean can be chosen arbitrary given a powerful enough transformation, so it is
-        set to 0 for simplicity. The variance gets learned during the training process.
+        The encoding distribution $P$ is naively chosen as Normal. The
+        mean can be chosen arbitrarily given a powerful enough transformation, so it is
+        set to 0 for simplicity. The variance is learned during the training process.
 
     \subsubsection{Distortion}\label{sub:Distortion}
-        Decreasing the bitrate is often traded against an increase in distortion.
-        Therefore we need a performance measure to evaluate the distortion of the
-        reconstructed image $\hat{x}$. A traditional metric is the Mean Squared Error (MSE),
+        Bitrate decrease is often traded for distortion increase.
+        Therefore, we need a performance measure to evaluate reconstructed image distortion $\hat{x}$. A traditional metric is the Mean Squared Error (MSE),
         \begin{equation}\label{equ:L2}
-            \mathbb{E}_{x, \hat{x}}[\sum_{i,j} (x_{ij} - \hat{x_{ij}})^2]
+            \mathbb{E}_{x, \hat{x}}[\sum_{i,j} (x_{ij} - \hat{x}_{ij})^2]
         \end{equation}
-        In early experimentation (see section 4.1), we found that some details which
-        may be considered important to the task, specifically the location of the
-        ball, were omitted as they accumulated little MSE penalty; in an attempt to
-        recover these aspects, we devised a second loss scheme, which we refer to as
+        Early experimentation (see section 4.1) found that some task-important details, specifically ball location, were omitted as they accumulated little MSE penalty; attempting to
+        recover these aspects, we devised a second loss scheme, referred to as
         latent loss. The motivation was to reward the decoder for reconstructing the
-        image in such a way that the same features would be extracted, resulting in
-        preserving the most important aspects. For this loss, we passed the
+        image such that the same features would be extracted, resulting in
+        important aspect preservation. For this loss, we passed the
         reconstructed image through the feature extractor and evaluated the MSE
-        between the original latent space and the reconstructed latent space.
+        between the original and reconstructed latent space.
 
 
         % If humans look at images however, they often just care about specific types
@@ -104,7 +89,7 @@
         % more about semantic distortion that would give them a different
         % interpretation and representation of the image. MSE however gives these
         % distortions all the same values.
-        
+
         % As the RL-Agent is used to encode the data and therefore should extract the
         % relevant features, it seems reasonable to let the agent also judge the
         % reconstruction. Therefore, a second approach will be to compare not the
@@ -112,8 +97,8 @@
         % of the images to measure similarity. In practive, this means passing both
         % images through the feature extractor and measuring the L2 distance in latent
         % space.
-        
-        
+
+
         % \subsection{Decoder loss}\label{sub:Decoder_Loss}
         %     For our decoder, we tried several loss functions. The simplest version was
         %     the MSE between the original and reconstructed images. \\
@@ -126,10 +111,10 @@
         %     preserving the most important aspects. For this loss, we passed the
         %     reconstructed image through the feature extractor and evaluated the MSE
         %     between the original latent space and the reconstructed latent space.
-        
-        
-        
-        
+
+
+
+
 
     % \subsection{Objective function from view of variational inference}
     %     In Lossy image compression, the objective function is given by the ELBO:
@@ -152,38 +137,37 @@
 
 \subsection{Training}
     \subsubsection{Process}
-        RL-agents are normally trained with a specific loss function, which will be
-        abstracted by $Loss_{RL}$. As the RL-agent takes the role of the encoder, it
+        RL-agents normally train with a specific loss function, which will be
+        abstracted by $Loss_{RL}$. As the RL-agent acts as the encoder, it
         is responsible for the bitrate. Therefore we add the loss from
-        \ref{eq:BitRate} to the standard loss:
+        \ref{eq:BitRate} to the standard RL loss:
         \begin{equation}\label{eq:RL_Training_Loss}
             \mathbb{E}_{x}[Loss_{RL}(x) + \alpha\cdot \mathbb{E}_{u \sim U[-\epsilon, \epsilon]}[log(P(Z=\hat{z} + u))]]
         \end{equation} where $\alpha \in \mathbb{R}$ is chosen to balance the two terms.
         Both expectations will be approximated by empirical means over the training
         data. As the RL-agent is independent of the decoder, we can also train it
-        separatly first.
+        separately first.
 
-        After training the RL-agent, we fix its values. Therefore at this point,
-        the encoding to the latents is fixed. Now the decoder to get the
-        reconstruction needs to be trained. For the decoder, we use the Loss
+        After training the RL-agent, we fix its values. Therefore, at this point
+        the encoding to the latents is fixed. Now the decoder is trained. For the decoder, we use the Loss
         schemes given in section \ref{sub:Distortion}.
 
 
     \subsubsection{Adaptive alpha (omitted)}\label{sub:Adaptive_Alpha}
         During training, an issue arose in choosing $\alpha$ (see Experiments and
         Evaluation) which we believe was caused by the RL reward: the agent behaves
-        randomly in early iterations and earns little reward, but this improves
-        drastically once it has started learning. Therefore, choosing $\alpha$ too large
+        randomly in early iterations and earns little reward, but improves
+        drastically once learning starts. Therefore, choosing $\alpha$ too large
         prevents the agent from ever learning to complete the task, while choosing
-        $\alpha$ too small allows the agent to ignore the cross entropy loss while
-        fine-tuning its actions. We tried to resolve this with a non-static $\alpha$: as
+        $\alpha$ too small allows the agent to ignore the cross entropy loss during action
+        fine-tuning. We tried to resolve this with a non-static $\alpha$: as
         the reward grows, the relative importance of the two terms should stay
         approximately the same. We designed several adaptation schemes (others can be
-        found in Future Work), but the general algorithm we chose was to update $\alpha$
+        found in Future Work), but the general chosen algorithm was to update $\alpha$
         each time the ratio threshold was violated. We implemented this by
         \begin{equation}
             \alpha = \alpha \cdot 10 \cdot e^{-i / 1000}
         \end{equation}
         where $i$ is the number of iterations. Multiplying by the negative iterations
-        ensures that $\alpha$ changes most drastically at the beginning, but will
-        converge over time.
+        ensures that $\alpha$ changes most drastically at the beginning, but
+        converges over time.
