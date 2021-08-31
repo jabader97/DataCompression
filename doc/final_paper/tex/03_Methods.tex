@@ -17,7 +17,7 @@
     the action. Ideally, this content should also be important
     for reconstruction. Then the latent space is losslessly encoded and
     transmitted with an algorithm of choice, such as ANS (for training this
-    step is unnecessary as the latents will be losslessly decompressed). After decoding, the latents they are passed through a normal upsampling NN.
+    step is unnecessary as the latents will be losslessly decompressed). After decoding, the latents are passed through a simple upsampling NN.
     Figure \ref{fig:Architecture} shows an overview of the architecture.
 
 \subsection{Theory}
@@ -27,7 +27,7 @@
     \subsubsection{Bitrate}
         Determining algorithm bitrate requires observing the encoding
         process, where the input image is mapped to the
-        latent space, see \ref{methods:Architecture}. This decreases the
+        latent space (see \ref{methods:Architecture}). This decreases the
         image bitrate if the latent entropy is lower than the image entropy and a sufficient encoding distribution for latent transmission is chosen. If the latent
         space distribution of $z$ is given by $Q_\theta(Z=z \vert x)$ where $\theta$
         parametrizes the distribution and $P(Z=z)$ is used to encode the latents for transmission, the bitrate is given by the cross entropy
@@ -42,8 +42,8 @@
         approach is to round the latents \cite{DBLP:journals/corr/BalleLS16a}. This reduces $Q$ to a discrete
         probability distribution, which reduces the cross entropy. However, rounding
         is undesirable during training, since its gradient is 0 nearly everywhere. Therefore, we replace
-        rounding during training with adding uniform noise $u$, see also
-        figure \ref{fig:Architecture}. This shifts the values
+        rounding during training with adding uniform noise $u$ (see also
+        figure \ref{fig:Architecture}). This shifts the values
         similarly to rounding, but is differentiable.
 
         Another effect of adding uniform noise is that we can reparametrize equation
