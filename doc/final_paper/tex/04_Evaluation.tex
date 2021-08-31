@@ -1,9 +1,17 @@
 \section{Experiments and Evaluation}
 \subsection{Environment}
-- gym (game breakout, describe)
-- stablebaselines (agent ppo)
+We used the game "Breakout" from the Gym toolkit \cite{brockman2016openai} as an
+environment for the agent. Breakout is a game in which the player controls a
+paddle to bounce the ball towards some blocks. Every block the ball touches gets
+destroyed, if no block is left the player wins. If the ball reaches the bottom
+end of the screen without being redirected by the paddle again, the player
+loses.
 
-
+The reinforcement learning agent learning and playing the game was Proximal
+Policy Optimization (PPO) \cite{raffin2019stable}. PPO is an on-policy
+algorithm, that uses an actor critic approach. We used the implementation of the
+stablebaselines3 package \cite{raffin2019stable} as a starting point, and
+modified it to our needs.
 
 \subsection{Dimension reduction}
 Our first set of experiments featured the basic dimension reduction method,
