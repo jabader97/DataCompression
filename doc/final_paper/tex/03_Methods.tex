@@ -37,8 +37,8 @@
         In addition, $Q=P$ will give the perfect encoding distribution. Hence, the
         entropy is a lower bound on the cross-entropy.
 
-        Because NNs have real valued outputs, $Q_\theta(Z=z
-        \vert x)$ is a continuous PDF, resulting in a high bit rate. Therefore, one
+        Because NNs have real valued outputs, ${Q_\theta(Z=z\vert x)}$
+         is a continuous PDF, resulting in a high bit rate. Therefore, one
         approach is to round the latents \cite{DBLP:journals/corr/BalleLS16a}. This reduces $Q$ to a discrete
         probability distribution, which reduces the cross entropy. However, rounding
         is undesirable during training, since its gradient is 0 nearly everywhere. Therefore, we replace

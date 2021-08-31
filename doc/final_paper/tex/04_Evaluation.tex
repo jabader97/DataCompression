@@ -24,18 +24,22 @@ from training set). \\
 \end{figure}
 
 
-\subsection{Compression}\label{sub:Results_Compression}
-Now we added the compression loss to the RL agent training, equation
-\ref{eq:RL_Training_Loss} and trained the agent with this loss function. We
-modified the $\alpha$ value, looking at the performance of the decoder after some epochs. An $\alpha$
-of $1e-4$ worked best, therefore we chose this value for an extended run over $1e5$ add epochs. Tested on an independently created test
-dataset, this resulted in an entropy of 1.7 bits per latent dimension, when the
-latent values were rounded to 3 digits. The actual bitrate given by the
-cross-entropy \ref{eq:BitRate} is higher however, as we must choose a
-fixed latent encoding and transmission distribution. For training we chose a Normal distribution with mean 0 and learned variance, also used for testing. The expected variance per dimension was estimated by the mean
-per dimension over the whole test dataset. However, the test cross-entropy was $\infty$. A visual investigation of the latent values showed
-that while the entropy of the latent values was low, some values deviated from 0 significantly (in the order of 100), leading to a probability of nearly
-0 and a logprob of $-\infty$.
+\subsection{Compression}\label{sub:Results_Compression} Now we added the
+compression loss to the RL agent training, equation \ref{eq:RL_Training_Loss}
+and trained the agent with this loss function. We modified the $\alpha$ value,
+looking at the performance of the decoder after some epochs. An $\alpha$ of
+$1e-4$ worked best, therefore we chose this value for an extended run over $1e5$
+epochs. Tested on an independently created test dataset, this resulted in an
+entropy of 1.7 bits per latent dimension, when the latent values were rounded to
+3 digits. The actual bitrate given by the cross-entropy \ref{eq:BitRate} is
+higher however, as we must choose a fixed latent encoding and transmission
+distribution. For training we chose a Normal distribution with mean 0 and
+learned variance, also used for testing. The expected variance per dimension was
+estimated by the mean per dimension over the whole test dataset. However, the
+test cross-entropy was significantly higher, mostly in the order of at least
+times 1000. A visual investigation of the latent values showed that while the
+entropy of the latent values was low, some values deviated from 0 significantly
+in the order of 100, leading to a probability of nearly 0.
 
 After training the RL Agent, the decoder was trained for $2e5$ epochs. This
 resulted in an MSE Loss of 1895. As discussed in \ref{sec:Introduction}, MSE
@@ -52,7 +56,9 @@ value. Therefore we investigated some images qualitatively. An example can be se
 \subsection{Latent Loss Scheme}
 As discussed in section \ref{sec:Introduction}, $L_2$ Loss may be suboptimal and
 we introduced a latent loss scheme \ref{sub:Distortion} as an alternative.
-Training a decoder with the latent loss scheme showed an image quality decrease compared to $L_2$ Loss, (see figure \ref{fig:baseline_MSE_latent}) (also from the training set).
+Training a decoder with the latent loss scheme showed an image quality decrease
+compared to $L_2$ Loss, (see figure \ref{fig:baseline_MSE_latent}) (also from
+the training set).
 
 \begin{figure}[H]
     \centering
