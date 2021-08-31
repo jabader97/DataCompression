@@ -5,10 +5,9 @@ Our first set of experiments featured the basic dimension reduction method,
 without the modifications for compression. We were looking to verify that the
 required reconstruction information was present within the lower dimensional
 representation created by the feature extractor. (TODO include bitrate) The
-qualitative results can be seen in Figure \ref{fig:baseline_MSE}. \\
+qualitative results can be seen in Figure \ref{fig:baseline_MSE} (it should be
+noted that the images came from the training set). \\
 
-We also utilized our latent loss scheme by pre-training on image reconstruction
-before training on the latent loss. The results can be seen in Figure 2.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{images/orig_reconstructed0.0.png}
@@ -56,7 +55,8 @@ compression some of the data got lost, since the image is distorted.
 As discussed in section \ref{sec:Introduction}, L2 Loss might be suboptimal and
 we introduced a latent loss scheme \ref{sub:Decoder_Loss} as an alternative.
 Training a decoder with the latent loss scheme showed an decrease in image
-quality compared to L2 Loss scheme, see figure \ref{fig:baseline_MSE_latent}.
+quality compared to L2 Loss scheme, see figure \ref{fig:baseline_MSE_latent}
+(also from the training set).
 
 \begin{figure}[H]
     \centering
