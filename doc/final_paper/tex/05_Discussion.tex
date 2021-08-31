@@ -2,79 +2,32 @@
 As can be seen in Figure 1, our baseline with the image MSE produced encouraging
 results: the location of the paddle was consistently preserved. However, areas
 of improvement include the artifacts that exist in this paddle along with the
-loss of the ball. As seen in Figure 2, use of the latent loss scheme resulted in
-extreme artifacts, as well as the loss of the paddle and did not result in ball
-recovery. A new scheme would be needed.\\
-Next, our adaptive $\alpha$ scheme was largely ineffective in verifying the
-expected behavior. Therefore, modifications should be made such that both task
-accuracy and bitrate should increase inversely with $\alpha$, or a theoretical
-foundation should found why they do not. This could be possible through other
-adaptive schemes (thresholds, static ratios, adaptive ratios, etc.). This may
-also require reflection to analyze if this divergence from expected behavior is
-driven by mechanisms other than RL loss. \\
-On a higher level, our agent suffers from poor generalization. While we cannot
-yet rule out insufficient training time (due to lack of resources), we believe
-this comes from lack of information in the encoding. As the encoding is designed
-to allow the agent to act, it may not be injective. A new architecture is
-required, for example: using an earlier layer of the feature extractor as the
-encoding; training the encoder and decoder together, to ensure the encoding
-retains the correct information; using a different encoder altogether.\\
-Furthermore, we would like to explore other environments. Because this
-environment included a static start position and relatively slow image change,
-we found that many of the images looked similar (full or almost full block
-pattern) which lead to poor generalization. Using the agent long enough to train
-and collect diverse images proved infeasible under time/resource constraints.\\
-In addition, a unique issue with train/test separation resulted from the
-cross-domain approach. Clear separation is an industry standard in the data
-compression industry. However, RL agents train freely, and therefore it is not
-possible to make guarantees in advance about which images the agent will train
-on. Our solution was to generate the test dataset independently from our agent,
-so that the probability of the same image appearing in both testing and training
-was low. Evaluation of this probability would need to be done before this could
-be a solution, but is likely intractable as state probabilities are unequal. A
-better solution would be to generate a large test set in advance and remove
-images if they appear during training. It can also be noted that full, final
-results should be reported on a test set rather than a training set (as done in
-the Dimension reduction section of experiments). These were done as rudimentary
-sanity checks, and were included due to lack of better results.\\
-Finally, as this paper only touched on the accuracy of the reconstruction, the
-compression must be analyzed as well. \\
-We also would prefer to do more data preprocessing.
-
-
-\section{Discussion/Future Work}
-As can be seen in Figure 1, our baseline with the image MSE produced encouraging
-results: the location of the paddle was consistently preserved. However, areas
-of improvement include the artifacts that exist in this paddle along with the
-loss of the ball.\\
+loss of the ball.
 %  As seen in Figure 2, use of the latent loss scheme resulted in
 % extreme artifacts, as well as the loss of the paddle and did not result in ball
 % recovery. A new scheme would be needed.\\
 \subsection{Bitrate inconsistency}
-When adding the custom loss function to the RL-agent, we saw that we couldn't
-get the desired influence. Increasing the alpha didn't necessarily decrease the
-entropy, but in general the entropy fluctuated strongly between runs. One
-of the reasons could be that the loss functions for the RL-agent is quite
-instable in itself. While in some epochs, the agent loss was relatively high, in
-other epochs, it was fairly small. Therefore, we tried to adjust the alpha
-dynamically to achieve to a given bitrate instead of using a fixed alpha.
+When adding the custom loss function to the RL-agent, we saw that we could not verify the desired influence. Increasing $\alpha$ did not necessarily decrease
+entropy, but entropy fluctuated strongly between runs. One
+reason could be that the RL-agent loss function is quite
+unstable in itself. While in some epochs, the agent loss was relatively high, it was fairly small in
+other epochs. Therefore, we adjusted $\alpha$
+dynamically to achieve to a desired bitrate instead of using a fixed $\alpha$.
 However, our adaptive $\alpha$ scheme was largely ineffective in verifying the
-expected behavior. Therefore, modifications should be made such that both task
-accuracy and bitrate should increase inversely with $\alpha$, or a theoretical
+expected behavior. Therefore, modifications should be made so both task
+accuracy and bitrate increase inversely with $\alpha$, or a theoretical
 foundation should found why they do not. This could be possible through other
 adaptive schemes (thresholds, static ratios, adaptive ratios, etc.). This may
 also require reflection to analyze if this divergence from expected behavior is
 driven by mechanisms other than RL loss.
-
-\subsection{Bitrate}
+\subsection{Bitrate evaluation}
 On the test set, the entropy of the final agent \ref{sub:Results_Compression} is
-reasonably small and the image gets compressed. However if in practice we encode
-the latents by the normal distribution used during the training process, the
-bitrate would be much higher. This means that while the agents is able to
-compress the data, it is not able to fit it into a normal distribution.
-Therefore future work needs to either make the agent fit the data better or find
-a new method to chose/estimate the distribution that gets used for encoding the
-latents.
+reasonably small and the image is compressed. However, if in testing we encode
+the latents Normally as during the training process, the
+bitrate would rise. This means that while the agents is able to
+compress the data, it is not able to fit it Normally.
+Therefore future work needs to either fit the agent better to the data or find
+a new method to chose/estimate the latent encoding distribution.
 
 \subsection{Decoder generalization}
 On the decoder side, we saw that the image quality decreased in
@@ -84,42 +37,38 @@ properties like the paddle position, and just reproduced static properties like
 the game frame. While we cannot yet rule out insufficient training time (due to
 lack of resources), we believe this comes from lack of information in the
 encoding. As the encoding is designed to allow the agent to act, it may not be
-injective, so many different gamestates could have the same representation. A
+injective; hence, many different game states could have the same representation. A
 new architecture is required, for example: using an earlier layer of the feature
-extractor as the encoding; training the encoder and decoder together, to ensure
-the encoding retains the correct information; using a different encoder
+extractor as the encoding; training the encoder and decoder together; using a different encoder
 altogether.
 
 \subsection{Latent loss scheme}
-Changing the loss function of the decoder to our latent loss scheme showed no
-improvement. The image seems to get noisy and information gets distorted. Even
-in the lower part of the image where normally the screen is black (except of the
-ball sometimes), the decoder introduces noise. One reason for this behaviour
-could be similar to adversarial attacks: The decoder figures out a way to trick
-the encoder to generate the desired latents, while using totally different input
-data. One improvement could be to combine the latent loss scheme with L2-Loss
-such that L2-Loss preserves the general image quality and penalizes distortion,
+Changing the decoder loss function to our latent loss scheme showed no
+improvement. The image becomes noisy and information is distorted. Even
+in the lower part of the image where normally the screen is black, the decoder introduces noise. One reason for this behaviour
+could be similar to adversarial attacks: the decoder tricks
+the encoder into generating the desired latents from totally different input images. One improvement could be to combine the latent loss scheme with $L_2$-Loss
+such that $L_2$-Loss preserves the general image quality and penalizes distortion,
 and latent loss preserves semantic information.
 
 \subsection{Environment}
 Furthermore, we would like to explore other environments. Because this
 environment included a static start position and relatively slow image change,
 we found that many of the images looked similar (full or almost full block
-pattern) which lead to overfitting in memorization of the image and consqeuently
+pattern) which lead to overfitting and consqeuently
 poor generalization. Using the agent long enough to train and collect diverse
 images proved infeasible under time/resource constraints.
 
 \subsection{Train test separatation}
 In addition, a unique issue with train/test separation resulted from the
-cross-domain approach. Clear separation is an industry standard in the data
-compression industry. However, RL agents train freely, and therefore it is not
-possible to make guarantees in advance about which images the agent will train
-on. Our solution was to generate the test dataset independently from our agent,
+cross-domain approach. Clear separation is an industry standard for data
+compression. However, RL agents train freely, and therefore it is not
+possible to make guarantees in advance about training images. Our solution was to generate the test dataset independently from our agent,
 so that the probability of the same image appearing in both testing and training
 was low. Evaluation of this probability would need to be done before this could
 be a solution, but is likely intractable as state probabilities are unequal. A
 better solution would be to generate a large test set in advance and remove
 images if they appear during training. It can also be noted that full, final
 results should be reported on a test set rather than a training set (as done in
-the Dimension reduction section of experiments). These were done as rudimentary
+the section \ref{sub:Dimension_reduction} of experiments). These were done as rudimentary
 sanity checks, and were included due to lack of better results.
