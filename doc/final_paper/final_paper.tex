@@ -9,6 +9,7 @@
 \usepackage{amsfonts}       % blackboard math symbols
 \usepackage{amsmath}       % blackboard math symbols
 \usepackage{amssymb}
+\usepackage{multicol}
 \usepackage{enumerate, multirow, color, graphicx, lastpage, listings, tikz, pdflscape, subfigure, float, polynom, tabularx, forloop, geometry, listings, fancybox, tikz, forest, tabstackengine, cancel}
 
 \graphicspath{{../graphics/}}
@@ -28,6 +29,11 @@
 
 \setlength{\parindent}{0pt}
 
+% For tighter image bounds and caption bounds
+\setlength{\belowcaptionskip}{-10pt}
+\setlength{\abovecaptionskip}{-10pt}
+\setlength\intextsep{0pt}
+
 \team{Jessica Bader, 5624582; Philipp Noel von Bachmann, 4116220 }
 \title{Extremely Lossy Compression through Reinforcement Learning}
 \author{\theteam}
@@ -37,11 +43,13 @@
 \begin{document}
 \maketitle
 
+\begin{multicols*}{2}
 \input{tex/01_Introduction.tex}
 \input{tex/02_RelatedWorks.tex}
 \input{tex/03_Methods.tex}
 \input{tex/04_Evaluation.tex}
-\input{tex/05_Discussion.tex}
+\input{tex/05_Discussion.tex}    
+\end{multicols*}
 
 \bibliographystyle{abbrv}
 \bibliography{tex/06_Literature.bib}
