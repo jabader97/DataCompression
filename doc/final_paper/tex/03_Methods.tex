@@ -155,8 +155,7 @@
 
 
     \subsubsection{Adaptive alpha (omitted)}\label{sub:Adaptive_Alpha}
-        During training, an issue arose in choosing $\alpha$ (see Experiments and
-        Evaluation) which we believe was caused by the RL reward: the agent behaves
+        During training, an issue arose in choosing $\alpha$ (see \ref{sub:adaptive_alpha_exp}) possibly caused by the RL reward: the agent behaves
         randomly in early iterations and earns little reward, but improves
         drastically once learning starts. Therefore, choosing $\alpha$ too large
         prevents the agent from ever learning to complete the task, while choosing
@@ -170,5 +169,5 @@
             \alpha = \alpha \cdot 10 \cdot e^{-i / 1000}
         \end{equation}
         where $i$ is the number of iterations. Multiplying by the negative iterations
-        ensures that $\alpha$ changes most drastically at the beginning, but
+        ensures that $\alpha$ changes drastically at the beginning, but
         converges over time.
