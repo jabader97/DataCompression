@@ -46,10 +46,11 @@ We also would prefer to do more data preprocessing.
 As can be seen in Figure 1, our baseline with the image MSE produced encouraging
 results: the location of the paddle was consistently preserved. However, areas
 of improvement include the artifacts that exist in this paddle along with the
-loss of the ball.
+loss of the ball.\\
 %  As seen in Figure 2, use of the latent loss scheme resulted in
 % extreme artifacts, as well as the loss of the paddle and did not result in ball
 % recovery. A new scheme would be needed.\\
+\subsection{Bitrate inconsistency}
 When adding the custom loss function to the RL-agent, we saw that we couldn't
 get the desired influence. Increasing the alpha didn't necessarily decrease the
 entropy, but in general the entropy fluctuated strongly between runs. One
@@ -65,6 +66,7 @@ adaptive schemes (thresholds, static ratios, adaptive ratios, etc.). This may
 also require reflection to analyze if this divergence from expected behavior is
 driven by mechanisms other than RL loss. \\
 
+\subsection{Bitrate}
 As ultimatly,the performance together with the decoder counts we chose a small
 alpha for the extended training of an agent. We saw that on a test set, the
 entropy of this agent is reasonably small and the image gets compressed. However
@@ -73,9 +75,10 @@ training process, the bitrate would be much higher. This means that while
 the agents is able to compress the data, it is not able to fit it into a normal
 distribution. Therefore future work needs to either make the agent fit the data
 better or find a new method to chose/estimate the distribution that gets used
-for encoding the latents. 
+for encoding the latents.\\
 
-On the decoder side, we saw that the image quality decreases drastically in
+\subsection{Decoder generalization}
+On the decoder side, we saw that the image quality decreases in
 comparison to the baseline, especially on the test dataset. While a decrease can
 be expected due to compression, the Decoder failed to reconstruct important
 properties like the paddle position, and just reproduced static properties like
@@ -88,6 +91,7 @@ extractor as the encoding; training the encoder and decoder together, to ensure
 the encoding retains the correct information; using a different encoder
 altogether.\\
 
+\subsection{Latent loss scheme}
 Changing the loss function to our latent loss scheme showed no improvement. The
 image seems to get noisy and information gets distorted. Even in the lower part
 of the image where normally the screen is black (except of the ball sometimes),
@@ -98,12 +102,14 @@ improvement could be to combine the latent loss scheme with L2-Loss such that
 L2-Loss preserves the general image quality and penalizes distortion,
 and latent loss preserves semantic information.
 
-
+\subsection{Environment}
 Furthermore, we would like to explore other environments. Because this
 environment included a static start position and relatively slow image change,
 we found that many of the images looked similar (full or almost full block
 pattern) which lead to poor generalization. Using the agent long enough to train
 and collect diverse images proved infeasible under time/resource constraints.\\
+
+\subsection{Train test separatation}
 In addition, a unique issue with train/test separation resulted from the
 cross-domain approach. Clear separation is an industry standard in the data
 compression industry. However, RL agents train freely, and therefore it is not
@@ -117,4 +123,3 @@ images if they appear during training. It can also be noted that full, final
 results should be reported on a test set rather than a training set (as done in
 the Dimension reduction section of experiments). These were done as rudimentary
 sanity checks, and were included due to lack of better results.\\
-We also would prefer to do more data preprocessing.
